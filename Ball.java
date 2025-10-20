@@ -4,13 +4,13 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
 public class Ball extends MovableObject {
-    protected int radius; // kích cỡ quả bóng
-    protected double speed = 1.0;
-    // direction components (unit-ish) — lưu để dễ hiểu; dx/dy = directionX * speed ...
-    protected double directionX = 1;
-    protected double directionY = -1;
+    protected int radius;         // bán kính bóng
+    protected double speed = 3.0; // tốc độ di chuyển
+    protected double directionX = 1;  // hướng X (1 = phải, -1 = trái)
+    protected double directionY = -1; // hướng Y (-1 = lên, 1 = xuống)
     public boolean alive = true;
 
+    // --- Constructor đầy đủ ---
     public Ball(double x, double y, int width, int height, double speed, double directionX, double directionY, int radius) {
         super(x, y, width, height, directionX * speed, directionY * speed);
         this.speed = speed;
@@ -19,10 +19,12 @@ public class Ball extends MovableObject {
         this.radius = radius;
     }
 
+    // --- Constructor ngắn ---
     public Ball(double x, double y, int width, int height) {
         this(x, y, width, height, 3.0, 1.0, -1.0, Math.min(width, height) / 2);
     }
 
+    // --- getter / setter bán kính ---
     public int getRadius() {
         return radius;
     }
@@ -31,34 +33,20 @@ public class Ball extends MovableObject {
         this.radius = radius;
     }
 
-    // --- getters / setters cho vx/vy (dx/dy) để dễ truy cập từ main/GameManager ---
-    public double getVx() {
-        return dx;
+    // --- getter / setter tốc độ ---
+    public double getSpeed() {
+        return speed;
     }
 
-    public double getVy() {
-        return dy;
+    public void setSpeed(double speed) {
+        if (speed <= 0) return;
+        this.speed = speed;
+        // Cập nhật dx/dy tương ứng với tốc độ mới
+        this.dx = this.directionX * speed;
+        this.dy = this.directionY * speed;
     }
 
-    public void setVx(double vx) {
-        this.dx = vx;
-        // cập nhật directionX nếu muốn giữ đơn vị
-        if (speed != 0) this.directionX = vx / speed;
-    }
-
-    public void setVy(double vy) {
-        this.dy = vy;
-        if (speed != 0) this.directionY = vy / speed;
-    }
-
-    public double getDirectionX() {
-        return directionX;
-    }
-
-    public double getDirectionY() {
-        return directionY;
-    }
-
+    // --- Cập nhật hướng ---
     public void setDirection(double dirX, double dirY) {
         this.directionX = dirX;
         this.directionY = dirY;
@@ -66,19 +54,7 @@ public class Ball extends MovableObject {
         this.dy = dirY * speed;
     }
 
-    public double getSpeed() {
-        return speed;
-    }
-
-    public void setSpeed(double speed) {
-        // điều chỉnh dx/dy theo speed mới nhưng giữ hướng
-        if (speed <= 0) return;
-        this.speed = speed;
-        this.dx = this.directionX * speed;
-        this.dy = this.directionY * speed;
-    }
-
-    // --- kiểm tra va chạm (AABB) nhưng KHÔNG tự xử lý va chạm ---
+    // --- Kiểm tra va chạm với vật khác ---
     public boolean intersects(GameObject other) {
         return !(x + width < other.getX()
                 || x > other.getX() + other.getWidth()
@@ -86,68 +62,72 @@ public class Ball extends MovableObject {
                 || y > other.getY() + other.getHeight());
     }
 
-    // --- kiểm tra và xử lý va chạm (gọi bounceOff nếu va chạm) ---
+    // --- Kiểm tra va chạm ---
     public boolean checkCollision(GameObject other) {
-        if (intersects(other)) {
-            return true;
-        }
-        return false;
+        return intersects(other);
     }
 
-    // va chạm với tường
+    // --- Va chạm tường ---
     public void checkWallCollision(int screenWidth, int screenHeight) {
+        // Chạm tường trái hoặc phải
         if (x <= 0 || x + width >= screenWidth) {
             directionX *= -1;
             dx = directionX * speed;
         }
 
+        // Chạm trần
         if (y <= 0) {
             directionY *= -1;
             dy = directionY * speed;
         }
 
+        // Rơi khỏi màn hình (thua)
         if (y + height >= screenHeight) {
             alive = false;
         }
     }
 
-    // Va chạm với các Object khác: public để gọi từ ngoài nếu muốn
+    // --- Va chạm với Brick hoặc Paddle ---
     public void bounceOff(GameObject other) {
-        if (other instanceof Brick) { // Va chạm với gạch
+        if (other instanceof Brick) { 
+            // Nảy ngược theo trục Y
             directionY *= -1;
             dy = directionY * speed;
-        } else if (other instanceof Paddle) {
-            Paddle paddle = (Paddle) other;
 
+        } else if (other instanceof Paddle paddle) {
+            // Xác định vị trí va chạm trên paddle để đổi góc bật
             double paddleCenter = paddle.getX() + paddle.getWidth() / 2.0;
             double ballCenter = x + width / 2.0;
 
-            // Hit position trong [-1, 1]
             double hitPos = (ballCenter - paddleCenter) / (paddle.getWidth() / 2.0);
             hitPos = Math.max(-1.0, Math.min(1.0, hitPos));
 
-            double maxAngle = Math.toRadians(60); // tối đa ±60 độ
+            double maxAngle = Math.toRadians(60);
             double angle = hitPos * maxAngle;
 
             directionX = Math.sin(angle);
-            directionY = -Math.cos(angle); // hướng lên trên
+            directionY = -Math.cos(angle);
 
             dx = directionX * speed;
             dy = directionY * speed;
         } else {
-            // default: đảo chiều Y
+            // mặc định đảo chiều Y
             directionY *= -1;
             dy = directionY * speed;
         }
     }
 
+    // --- Cập nhật vị trí ---
     public void update() {
         x += dx;
         y += dy;
     }
 
+    // --- Vẽ bóng ---
     public void render(GraphicsContext gc) {
         gc.setFill(Color.RED);
         gc.fillOval(x, y, width, height);
+        gc.setStroke(Color.WHITE);
+        gc.strokeOval(x, y, width, height);
     }
 }
