@@ -8,20 +8,18 @@ public abstract class FastBallPowerUp extends PowerUp{
     }
 
     @Override
-    public void applyEffect(Paddle paddle) {
-        if (!active && paddle.getCurrentPowerUp() != null) {
-            String ball = paddle.getCurrentPowerUp();
-            ball.isEmpty(Ball.speed * addSpeed);
+    public void applyEffect(Paddle paddle, Ball ball) {
+        if (!active && paddle.getCurrentPowerUp() == null) {
+            ball.setSpeed(ball.getSpeed() * addSpeed);
             active = true;
             System.out.println("Tăng tốc độ bóng");
         }
     }
 
     @Override
-    public void removeEffect(Paddle paddle) {
-        if (active && paddle.getCurrentPowerUp() != null) {
-            String ball = paddle.getCurrentPowerUp();
-            ball.isEmpty(Ball.speed / addSpeed);
+    public void removeEffect(Paddle paddle, Ball ball) {
+        if (active && paddle.getCurrentPowerUp() == null) {
+            ball.setSpeed(ball.getSpeed() / addSpeed);
             active = false;
             System.out.println("Hết hiệu lực");
         }

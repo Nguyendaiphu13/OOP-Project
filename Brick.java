@@ -1,6 +1,6 @@
 public class Brick extends GameObject {
     private int hitPoints;
-    private final String type;
+    private String type;
 
     public Brick(double x, double y, int width, int height, int hitPoints, String type) {
         super(x, y, width, height);
@@ -18,4 +18,5 @@ public class Brick extends GameObject {
 
     @Override
     public void update() {}
+    public void render() {}
 }

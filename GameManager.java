@@ -1,3 +1,5 @@
+import java.util.List;
+import java.util.ArrayList;
 public class GameManager {
     public Paddle paddle;
     public Ball ball;
@@ -27,13 +29,7 @@ public class GameManager {
         }
     }
 
-    handleInput() {
 
-    } // cập nhật sau
-
-    checkCollisions() {
-
-    }// cập nhật sau
 
     public void gameOver() {
         gameState = "Thua"; // sau khi thua đổi trạng thái

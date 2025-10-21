@@ -37,7 +37,7 @@ abstract class GameObject {
         return width;
     }
 
-    public void update ();
-    public void render ();
+    public void update () {};
+    public void render () {};
 
 }

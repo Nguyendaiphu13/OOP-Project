@@ -1,13 +1,14 @@
 public class Paddle extends MovableObject {
     protected double speed;
-    protected String currentPowerUp;
+    protected static String currentPowerUp;
+
     public void setSpeed(double speed) {
         this.speed = speed;
     }
     public double getSpeed() {
         return speed;
     }
-    public Paddle(int x, int y, int width, int height, double speed) {
+    public Paddle(double x, double y, int width, int height,double dx, double dy, double speed) {
         super(x, y, width, height, dx, dy);
         this.speed = speed;
         this.currentPowerUp = null;
