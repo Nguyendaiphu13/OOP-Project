@@ -1,9 +1,17 @@
+package org.example.demo;
 abstract class MovableObject extends GameObject {
     protected double dx,dy;
+
+    // constructor này là để tạo di chuyển cho ball
     public MovableObject(double x, double y, int width, int height, double dx, double dy) {
         super(x, y, width, height);
         this.dx = dx;
         this.dy = dy;
+    }
+
+    // cái này cho paddle nên không cần dx,dy
+    public MovableObject(double x, double y, int width, int height) {
+        super(x, y, width, height);
     }
     public double getDx() {
         return dx;
