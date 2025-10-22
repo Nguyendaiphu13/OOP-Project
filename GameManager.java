@@ -1,17 +1,25 @@
+package org.example.demo;
+
 import java.util.List;
 import java.util.ArrayList;
 public class GameManager {
     public Paddle paddle;
     public Ball ball;
     public List<Brick> bricks;
-    public List<PowerUp> powerUps;
     public int score;
     public int lives;
     public String gameState; // trang thái game
 
+    public List<PowerUp> fallingPowerUps = new ArrayList<>();
+    // các power-up đang được áp dụng
+
+    public List<PowerUp> activeEffects = new ArrayList<>();
+
+    // đếm thời gian
+    public long effectStartTime = 0;
+
     public GameManager() {
         this.bricks = new ArrayList<>();
-        this.powerUps = new ArrayList<>();
         this.score = 0;
         this.lives = 3;
         this.gameState = "Đang chơi"; // trạng thái đang  chs game
