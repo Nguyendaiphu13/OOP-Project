@@ -1,6 +1,9 @@
+package org.example.demo;
+
 public abstract class PowerUp extends GameObject {
     protected String type;
     protected int duration;
+    public boolean active = true;
 
     public PowerUp(double x, double y, int width, int height, String type, int duration) {
         super(x, y, width, height);
@@ -28,7 +31,9 @@ public abstract class PowerUp extends GameObject {
         return duration;
     }
 
-    public static boolean active = true;
+    public boolean isActive() {
+        return active;
+    }
 
     public void setActive(boolean active) {
         this.active = active;
