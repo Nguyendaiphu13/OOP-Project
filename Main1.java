@@ -10,6 +10,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.input.KeyCode;
 import javafx.animation.AnimationTimer;
 
+
 import java.util.Iterator;
 
 public class Main1 extends Application {
@@ -64,6 +65,11 @@ public class Main1 extends Application {
                     gc.fillText("GAME OVER! Final Score: " + gameManager.score, SCREEN_WIDTH / 2.0 - 50, SCREEN_HEIGHT / 2.0);
                     this.stop();
                 }
+                else if (gameManager.gameState.equals("Thắng")) {
+                    gc.setFill(Color.GREEN);
+                    gc.fillText("YOU WIN! Final Score: " + gameManager.score, SCREEN_WIDTH / 2.0 - 50, SCREEN_HEIGHT / 2.0);
+                    this.stop();
+                }
             }
         };
         gameLoop.start();
@@ -97,7 +103,18 @@ public class Main1 extends Application {
             for (int j = 0; j < cols; j++) {
                 double x = j * (brickWidth + 10) + 35;
                 double y = i * (brickHeight + 10) + 50;
-                gameManager.bricks.add(new Brick(x, y, brickWidth, brickHeight, 1, "normal"));
+                String brickType;
+                double rand = Math.random(); // Lấy số ngẫu nhiên 0.0 -> 1.0
+                if (rand < 0.2) {
+                    brickType = "2normal";
+                } else if (rand < 0.40) {
+                    brickType = "expand";
+                } else {
+                    brickType = "normal";
+                }
+
+                // Sử dụng constructor mới (không cần truyền số 1 nữa)
+                gameManager.bricks.add(new Brick(x, y, brickWidth, brickHeight, brickType));
             }
         }
     }
@@ -127,22 +144,71 @@ public class Main1 extends Application {
             if (CheckCollision.intersects(gameManager.ball, brick)) {
                 CheckCollision.bounceOff(gameManager.ball, brick);
 
-                // Xóa gạch và cộng điểm
-                brickIterator.remove();
-                gameManager.score += 10;
+                brick.takeHit();
 
-                // Thoát khỏi vòng lặp để chỉ phá 1 gạch mỗi khung hình
-                break;
+                // Chỉ xóa gạch nếu nó thực sự bị vỡ
+                if (brick.isDestroyed()) {
+                    if (brick.getType().equals("expand")) {
+                        double pX = brick.getX() + (brick.getWidth() / 2.0) - 10;
+                        double pY = brick.getY();
+                        gameManager.fallingPowerUps.add(new ExpandPaddlePowerUp(pX, pY));
+                    }
+                    // Xóa gạch và cộng điểm
+                    brickIterator.remove();
+                    gameManager.score += 10;
+
+                    // Thoát khỏi vòng lặp để chỉ phá 1 gạch mỗi khung hình
+                    break;
+                }
             }
         }
 
-        // Xử lý khi bóng rơi ra ngoài
+        if (gameManager.bricks.isEmpty()) {
+            gameManager.gameState = "Thắng";
+        }
+
+        // logic powerup
+        Iterator<PowerUp> powerUpIterator = gameManager.fallingPowerUps.iterator();
+        while (powerUpIterator.hasNext()) {
+            PowerUp powerUp = powerUpIterator.next();
+            powerUp.update();
+
+            if (powerUp.getY() > SCREEN_HEIGHT) {
+                powerUpIterator.remove();
+                continue;
+            }
+
+            if (CheckCollision.intersects(powerUp, gameManager.paddle)) {
+                for (PowerUp oldEffect : gameManager.activeEffects) {
+                    oldEffect.removeEffect(gameManager.paddle, gameManager.ball);
+                }
+                gameManager.activeEffects.clear();
+
+                powerUp.applyEffect(gameManager.paddle, gameManager.ball);
+                gameManager.activeEffects.add(powerUp);
+                gameManager.effectStartTime = System.currentTimeMillis();
+
+                powerUpIterator.remove();
+            }
+        }
+
+        // kiểm tra thời hạn của hiệu ứng
+        if (!gameManager.activeEffects.isEmpty()) {
+            PowerUp currentEffect = gameManager.activeEffects.get(0);
+            long elapsedTime = System.currentTimeMillis() - gameManager.effectStartTime;
+
+            if (elapsedTime > currentEffect.getDuration()) {
+                currentEffect.removeEffect(gameManager.paddle, gameManager.ball);
+                gameManager.activeEffects.remove(currentEffect);
+            }
+        }
+
         if (!gameManager.ball.alive) {
             gameManager.lives--;
             if (gameManager.lives <= 0) {
                 gameManager.gameOver();
             } else {
-                // Reset vị trí bóng lên giữa paddle
+                // Reset vị trí bóng
                 double paddleCenterX = gameManager.paddle.getX() + gameManager.paddle.getWidth() / 2.0;
                 double newBallX = paddleCenterX - gameManager.ball.getWidth() / 2.0;
                 double newBallY = gameManager.paddle.getY() - gameManager.ball.getHeight() - 5;
@@ -160,7 +226,7 @@ public class Main1 extends Application {
     }
 
 
-    private void renderGame(GraphicsContext gc) {
+    private void renderGame (GraphicsContext gc) {
 
         gc.setFill(Color.BLACK);
         gc.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -172,9 +238,12 @@ public class Main1 extends Application {
         gc.setFill(Color.WHITE);
         gc.fillOval(gameManager.ball.getX(), gameManager.ball.getY(), gameManager.ball.getWidth(), gameManager.ball.getHeight());
 
-        gc.setFill(Color.GREEN);
         for (Brick brick : gameManager.bricks) {
-            gc.fillRect(brick.getX(), brick.getY(), brick.getWidth(), brick.getHeight());
+                brick.render(gc); //
+        }
+        gc.setFill(Color.WHITE);
+        for (PowerUp powerUp : gameManager.fallingPowerUps) {
+            gc.fillOval(powerUp.getX(), powerUp.getY(), 10, 10);
         }
 
         gc.setFill(Color.WHITE);
