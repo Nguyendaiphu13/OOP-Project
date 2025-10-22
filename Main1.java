@@ -79,7 +79,7 @@ public class Main1 extends Application {
         int paddleHeight = 20;
         double paddleX = (SCREEN_WIDTH - paddleWidth) / 2.0;
         double paddleY = SCREEN_HEIGHT - paddleHeight - 30;
-        gameManager.paddle = new Paddle(paddleX, paddleY, paddleWidth, paddleHeight,0,0,100);
+        gameManager.paddle = new Paddle(paddleX, paddleY, paddleWidth, paddleHeight,100);
 
 
         int ballRadius = 10;
@@ -92,7 +92,7 @@ public class Main1 extends Application {
         int brickWidth = 70;
         int brickHeight = 20;
         int rows = 5;
-        int cols = 10;
+        int cols = 9;
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 double x = j * (brickWidth + 10) + 35;
@@ -107,6 +107,7 @@ public class Main1 extends Application {
         gameManager.paddle.update();
         gameManager.ball.update();
 
+        // Giữ paddle trong màn hình
         if (gameManager.paddle.getX() < 0) {
             gameManager.paddle.setX(0);
         }
@@ -114,45 +115,44 @@ public class Main1 extends Application {
             gameManager.paddle.setX(SCREEN_WIDTH - gameManager.paddle.getWidth());
         }
 
-        // 1. Va chạm với tường
         CheckCollision.checkWallCollision(gameManager.ball, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-        // 2. Va chạm với paddle
         if (CheckCollision.intersects(gameManager.ball, gameManager.paddle)) {
             CheckCollision.bounceOff(gameManager.ball, gameManager.paddle);
         }
 
-        // 3. Va chạm với gạch
         Iterator<Brick> brickIterator = gameManager.bricks.iterator();
         while (brickIterator.hasNext()) {
             Brick brick = brickIterator.next();
             if (CheckCollision.intersects(gameManager.ball, brick)) {
-                brick.takeHit();
                 CheckCollision.bounceOff(gameManager.ball, brick);
-                if(brick.isDestroyed()){
-                    brickIterator.remove(); // Xóa gạch khỏi danh sách
-                    gameManager.score += 10;
-                }
+
+                // Xóa gạch và cộng điểm
+                brickIterator.remove();
+                gameManager.score += 10;
+
+                // Thoát khỏi vòng lặp để chỉ phá 1 gạch mỗi khung hình
+                break;
             }
         }
 
-
+        // Xử lý khi bóng rơi ra ngoài
         if (!gameManager.ball.alive) {
             gameManager.lives--;
             if (gameManager.lives <= 0) {
                 gameManager.gameOver();
             } else {
+                // Reset vị trí bóng lên giữa paddle
                 double paddleCenterX = gameManager.paddle.getX() + gameManager.paddle.getWidth() / 2.0;
                 double newBallX = paddleCenterX - gameManager.ball.getWidth() / 2.0;
-                double newBallY = gameManager.paddle.getY() - gameManager.ball.getHeight() - 5; // -5px để có khoảng hở
+                double newBallY = gameManager.paddle.getY() - gameManager.ball.getHeight() - 5;
 
                 gameManager.ball.setX(newBallX);
                 gameManager.ball.setY(newBallY);
 
-                // Reset lại hướng và trạng thái để đảm bảo tốc độ nhất quán
                 double initialDir = 1 / Math.sqrt(2);
-                gameManager.ball.directionX = 0; // Bay chéo về bên phải
-                gameManager.ball.directionY = -initialDir; // Bay lên trên
+                gameManager.ball.directionX = initialDir;
+                gameManager.ball.directionY = -initialDir;
                 gameManager.ball.updateVelocity();
                 gameManager.ball.alive = true;
             }
