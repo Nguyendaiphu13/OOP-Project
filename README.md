@@ -9,4 +9,4 @@
 3. Phân chia công việc
    + Gameloop, GamePanel: Phú
    + Object, Event handling: Giang, Hiếu
-![alt text] (https://github.com/Nguyendaiphu13/OOP-Project/blob/Week7-Fixbug/uml.png)
+
