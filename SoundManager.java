@@ -1,4 +1,4 @@
-package org.example.demo; // Phải cùng package với Main1.java
+package org.example.demo; 
 
 import javafx.scene.media.AudioClip;
 import java.net.URL;
@@ -17,7 +17,6 @@ public class SoundManager {
     }
 
     private void loadSounds() {
-        // Dấu "/" ở đầu nghĩa là tìm từ gốc của thư mục "resources"
         paddleHitSound = loadClip("/resources_Ball_Paddle.mp3");
         brickHitSound = loadClip("/Ball_Block.mp3");
         hardBrickHitSound = loadClip("/Ball_Hard_Block.mp3");
@@ -25,7 +24,6 @@ public class SoundManager {
         openingSound = loadClip("/Opening.mp3");
     }
 
-    // Hàm trợ giúp để tải file, tránh lặp code
     private AudioClip loadClip(String fileName) {
         try {
             URL resource = getClass().getResource(fileName);
@@ -41,7 +39,6 @@ public class SoundManager {
         }
     }
 
-    // Các hàm public để Main1.java có thể gọi
     public void playPaddleHit() {
         if (paddleHitSound != null) {
             paddleHitSound.play();
