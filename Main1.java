@@ -16,6 +16,8 @@ import java.util.Iterator;
 public class Main1 extends Application {
 
     private GameManager gameManager;
+    private SoundManager soundManager; 
+    private boolean gameOverSoundPlayed = false;
 
 
     private static final int SCREEN_WIDTH = 800;
@@ -24,7 +26,7 @@ public class Main1 extends Application {
     @Override
     public void start(Stage primaryStage) {
         gameManager = new GameManager();
-
+        soundManager = new SoundManager();
         setupGameObjects();
 
         Pane root = new Pane();
@@ -63,6 +65,7 @@ public class Main1 extends Application {
 
                     gc.setFill(Color.RED);
                     gc.fillText("GAME OVER! Final Score: " + gameManager.score, SCREEN_WIDTH / 2.0 - 50, SCREEN_HEIGHT / 2.0);
+                    soundManager.playGameOver();
                     this.stop();
                 }
                 else if (gameManager.gameState.equals("Thắng")) {
@@ -73,7 +76,7 @@ public class Main1 extends Application {
             }
         };
         gameLoop.start();
-
+        soundManager.playOpening();
         primaryStage.setTitle("OOP Game - JavaFX");
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -136,28 +139,42 @@ public class Main1 extends Application {
 
         if (CheckCollision.intersects(gameManager.ball, gameManager.paddle)) {
             CheckCollision.bounceOff(gameManager.ball, gameManager.paddle);
+            soundManager.playPaddleHit();
         }
 
+       
         Iterator<Brick> brickIterator = gameManager.bricks.iterator();
         while (brickIterator.hasNext()) {
             Brick brick = brickIterator.next();
             if (CheckCollision.intersects(gameManager.ball, brick)) {
                 CheckCollision.bounceOff(gameManager.ball, brick);
 
-                brick.takeHit();
+                if (brick.getType().equals("2normal")) {
+            
+                    brick.takeHit();
+                    
+                    if (!brick.isDestroyed()){
+                        soundManager.playHardBrickHit();
+                    } else {
+         
+                        soundManager.playBrickHit();
+                    }
+                } else {
+                    brick.takeHit();
+                    soundManager.playBrickHit();
+                }
 
-                // Chỉ xóa gạch nếu nó thực sự bị vỡ
+
                 if (brick.isDestroyed()) {
                     if (brick.getType().equals("expand")) {
                         double pX = brick.getX() + (brick.getWidth() / 2.0) - 10;
                         double pY = brick.getY();
                         gameManager.fallingPowerUps.add(new ExpandPaddlePowerUp(pX, pY));
                     }
-                    // Xóa gạch và cộng điểm
                     brickIterator.remove();
                     gameManager.score += 10;
 
-                    // Thoát khỏi vòng lặp để chỉ phá 1 gạch mỗi khung hình
+
                     break;
                 }
             }
