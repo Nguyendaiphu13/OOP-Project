@@ -1,9 +1,12 @@
-package org.example.demo;
-
+package com.mygame.mygamearkanoid;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Brick extends GameObject {
+    public List<Brick> bricks ;
     private int hitPoints;
     private String type;
 

@@ -1,4 +1,4 @@
-package org.example.demo;
+package com.mygame.mygamearkanoid;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
@@ -194,26 +194,17 @@ public class Main1 extends Application {
         double vecDir = 1 / Math.sqrt(2);
         gameManager.ball = new Ball(ballX, ballY, ballRadius * 2, ballRadius * 2, 5.0, vecDir, -vecDir, ballRadius);
 
+        int rows = 5;
+        int cols = 10;
         int brickWidth = 70;
         int brickHeight = 20;
-        int rows = 5;
-        int cols = 9;
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j< cols; j++) {
-                double x = j * (brickWidth + 10) + 35;
-                double y = i * (brickHeight + 10) + 50;
-                String brickType;
-                double rand = Math.random();
-                if (rand < 0.2) {
-                    brickType = "2normal";
-                } else if (rand < 0.40) {
-                    brickType = "expand";
-                } else {
-                    brickType = "normal";
-                }
-                gameManager.bricks.add(new Brick(x, y, brickWidth, brickHeight, brickType));
-            }
-        }
+        double startX = 35;
+        double startY = 50;
+        double gapX = 3;
+        double gapY = 3;
+
+        Level.generateLevel1(gameManager, rows, cols, brickWidth, brickHeight,startX, startY, gapX, gapY);
+
     }
 
     private void updateGame() {
@@ -294,7 +285,7 @@ public class Main1 extends Application {
         }
 
         if (!gameManager.activeEffects.isEmpty()) {
-            PowerUp currentEffect = gameManager.activeEffects.get(0);
+            PowerUp currentEffect = gameManager.activeEffects.getFirst();
             long elapsedTime = System.currentTimeMillis() - gameManager.effectStartTime;
 
             if (elapsedTime > currentEffect.getDuration()) {
