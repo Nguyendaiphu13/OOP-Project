@@ -1,4 +1,5 @@
-package org.example.demo;
+package com.mygame.mygamearkanoid;
+
 
 // 1. Xóa 'abstract'
 public class ExpandPaddlePowerUp extends PowerUp {

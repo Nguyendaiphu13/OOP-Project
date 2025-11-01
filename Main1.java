@@ -9,7 +9,6 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.input.KeyCode;
 import javafx.animation.AnimationTimer;
-// *** CÁC IMPORT MỚI ĐỂ TẠO MENU ***
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.control.Button;
@@ -17,7 +16,17 @@ import javafx.scene.control.Label;
 import javafx.geometry.Pos;
 import javafx.scene.text.Font;
 
+import javafx.scene.image.Image;
+import java.net.URL;
 import java.util.Iterator;
+
+// --- CÁC IMPORT MỚI ĐỂ SET BACKGROUND BẰNG CODE ---
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundImage;
+import javafx.scene.layout.BackgroundPosition;
+import javafx.scene.layout.BackgroundRepeat;
+import javafx.scene.layout.BackgroundSize;
+// --------------------------------------------------
 
 public class Main1 extends Application {
 
@@ -27,7 +36,6 @@ public class Main1 extends Application {
     private static final int SCREEN_WIDTH = 800;
     private static final int SCREEN_HEIGHT = 600;
 
-    // (1) Khai báo các "màn hình" (Screens)
     private Pane gameScreen;
     private VBox menuScreen;
     private VBox gameOverScreen;
@@ -36,6 +44,11 @@ public class Main1 extends Application {
     private GraphicsContext gc;
     private AnimationTimer gameLoop;
 
+    // --- BIẾN CHO TẤT CẢ ẢNH NỀN ---
+    private Image gameBackgroundImage;
+    private Image menuBackgroundImage;  // <-- THÊM CÁI NÀY
+    private Image gameOverBackgroundImage; // <-- THÊM CÁI NÀY
+
     @Override
     public void start(Stage primaryStage) {
         gameManager = new GameManager();
@@ -43,33 +56,38 @@ public class Main1 extends Application {
 
         StackPane rootPane = new StackPane();
 
+        // 1. Tải tất cả ảnh nền
+        loadAllBackgroundImages();
+
+        // 2. Tạo màn hình game (Canvas)
         gameScreen = createGameScreen();
+
+        // 3. Tạo các màn hình còn lại (VBox)
         menuScreen = createMenuScreen();
         gameOverScreen = createGameOverScreen();
 
+        // 4. Thêm tất cả vào rootPane
         rootPane.getChildren().addAll(gameScreen, gameOverScreen, menuScreen);
 
         Scene scene = new Scene(rootPane, SCREEN_WIDTH, SCREEN_HEIGHT);
 
         scene.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.LEFT) {
-                gameManager.paddle.setDx(-5); // Di chuyển trái
+                gameManager.paddle.setDx(-5);
             } else if (event.getCode() == KeyCode.RIGHT) {
-                gameManager.paddle.setDx(5); // Di chuyển phải
+                gameManager.paddle.setDx(5);
             }
         });
 
         scene.setOnKeyReleased(event -> {
             if (event.getCode() == KeyCode.LEFT || event.getCode() == KeyCode.RIGHT) {
-                gameManager.paddle.setDx(0); // Dừng lại
+                gameManager.paddle.setDx(0);
             }
         });
 
-        // --- Cài đặt Game Loop ---
         gameLoop = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                // Logic game loop
                 if (gameManager.gameState.equals("Đang chơi")) {
                     updateGame();
                     renderGame(gc);
@@ -87,20 +105,93 @@ public class Main1 extends Application {
         primaryStage.show();
     }
 
+    /**
+     * Hàm mới: Tải tất cả ảnh nền ở một nơi
+     */
+    private void loadAllBackgroundImages() {
+        String imagePathGame = "/com/mygame/mygamearkanoid/images/BackgroundGame.png";
+        String imagePathMenu = "/com/mygame/mygamearkanoid/images/StartGame1.png";
+        String imagePathGameOver = "/com/mygame/mygamearkanoid/images/GameOver.png";
+
+        try {
+            gameBackgroundImage = loadImage(imagePathGame);
+            menuBackgroundImage = loadImage(imagePathMenu);
+
+            gameOverBackgroundImage = loadImage(imagePathGameOver);
+
+        } catch (Exception e) {
+            System.err.println("Lỗi nghiêm trọng khi tải ảnh: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        if (menuBackgroundImage == null) {
+            System.err.println("Không thể tải ảnh nền Menu: " + imagePathMenu);
+        }
+        if (gameOverBackgroundImage == null) {
+            System.err.println("Không thể tải ảnh nền Game Over: " + imagePathGameOver);
+        }
+    }
+
+    /**
+     * Hàm trợ giúp tải ảnh (giống trong file Main.java của bạn)
+     */
+    private Image loadImage(String path) {
+        URL url = getClass().getResource(path);
+        if (url != null) {
+            Image img = new Image(url.toExternalForm());
+            if (img.isError()) {
+                System.err.println("Lỗi khi tải ảnh. Tệp có thể bị hỏng: " + url.toExternalForm());
+                return null;
+            }
+            return img;
+        } else {
+            System.err.println("KHÔNG THỂ TÌM THẤY TỆP: " + path);
+            return null; // Không tìm thấy tệp
+        }
+    }
+
+    /**
+     * Hàm trợ giúp tạo Background (giống trong file Main.java của bạn)
+     */
+    private Background createBackgroundImage(Image image) {
+        BackgroundImage bgImg = new BackgroundImage(
+                image,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                // Đặt kích thước ảnh nền bằng kích thước màn hình
+                new BackgroundSize(SCREEN_WIDTH, SCREEN_HEIGHT, false, false, false, false)
+        );
+        return new Background(bgImg);
+    }
+
+
     private Pane createGameScreen() {
         Pane gamePane = new Pane();
         Canvas gameCanvas = new Canvas(SCREEN_WIDTH, SCREEN_HEIGHT);
-        gc = gameCanvas.getGraphicsContext2D(); // gc là biến global
+        gc = gameCanvas.getGraphicsContext2D();
         gamePane.getChildren().add(gameCanvas);
         return gamePane;
     }
 
+    // --- ĐÃ SỬA LẠI HÀM NÀY ---
     private VBox createMenuScreen() {
-        VBox menuBox = new VBox(20); // Spacing 20
+        VBox menuBox = new VBox(20);
         menuBox.setAlignment(Pos.CENTER);
-        menuBox.setStyle("-fx-background-color: #222;");
 
-        Label title = new Label("ArkanoidGame");
+        // --- XÓA DÒNG setStyle(...) ĐI ---
+        // menuBox.setStyle( ... );
+
+        // --- THAY BẰNG CODE JAVA NÀY ---
+        if (menuBackgroundImage != null) {
+            menuBox.setBackground(createBackgroundImage(menuBackgroundImage));
+        } else {
+            menuBox.setStyle("-fx-background-color: black;"); // Nền đen dự phòng
+        }
+        // --------------------------------
+
+        // Thêm lại các nút bấm (như tôi đã nói ở câu trả lời trước)
+        Label title = new Label("Arkanoid Game");
         title.setFont(new Font("Calibri Light", 40));
         title.setTextFill(Color.WHITE);
 
@@ -112,11 +203,19 @@ public class Main1 extends Application {
         return menuBox;
     }
 
-
+    // --- ĐÃ SỬA LẠI HÀM NÀY ---
     private VBox createGameOverScreen() {
         VBox gameOverBox = new VBox(20);
         gameOverBox.setAlignment(Pos.CENTER);
-        gameOverBox.setStyle("-fx-background-color: #222;");
+
+        // --- XÓA DÒNG setStyle(...) ĐI ---
+        // gameOverBox.setStyle( ... );
+
+        // --- THAY BẰNG CODE JAVA NÀY ---
+        // Chúng ta sẽ set nền trong hàm showGameOverScreen()
+        // để nó luôn cập nhật đúng
+        gameOverBox.setStyle("-fx-background-color: transparent;");
+        // --------------------------------
 
         gameOverLabel = new Label();
         gameOverLabel.setFont(new Font("Calibri Light", 30));
@@ -129,6 +228,7 @@ public class Main1 extends Application {
         return gameOverBox;
     }
 
+    // (Hàm showMenuScreen không đổi)
     private void showMenuScreen() {
         gameManager.gameState = "Menu";
         menuScreen.setVisible(true);
@@ -137,15 +237,23 @@ public class Main1 extends Application {
         menuScreen.toFront();
     }
 
-
+    // --- ĐÃ SỬA LẠI HÀM NÀY ---
     private void showGameOverScreen() {
+        // Đặt ảnh nền MỖI KHI HIỂN THỊ
+        if (gameOverBackgroundImage != null) {
+            gameOverScreen.setBackground(createBackgroundImage(gameOverBackgroundImage));
+        } else {
+            gameOverScreen.setStyle("-fx-background-color: #222;"); // Nền dự phòng
+        }
+
+        // (Phần còn lại giữ nguyên)
         if (gameManager.gameState.equals("Thua")) {
             gameOverLabel.setText(" GAME OVER!\nFinal Score: " + gameManager.score);
             gameOverLabel.setTextFill(Color.WHITE);
             soundManager.playGameOver();
         } else { // Thắng
             gameOverLabel.setText(" YOU WIN!\nFinal Score: " + gameManager.score);
-            gameOverLabel.setTextFill(Color.WHITE);
+            gameOverLabel.setTextFill(Color.CYAN);
         }
 
         menuScreen.setVisible(false);
@@ -154,7 +262,7 @@ public class Main1 extends Application {
         gameOverScreen.toFront();
     }
 
-
+    // --- ĐÃ SỬA LẠI HÀM NÀY ---
     private void showGameScreen() {
         resetGame();
         menuScreen.setVisible(false);
@@ -162,25 +270,28 @@ public class Main1 extends Application {
         gameScreen.setVisible(true);
         gameScreen.toFront();
 
+        // --- THÊM DÒNG NÀY ---
+        // Xóa nền của màn hình game over đi
+        // để nó không bị "rò rỉ" qua màn hình game
+        gameOverScreen.setBackground(null);
+        // ----------------------
+
         gameLoop.start();
         soundManager.playOpening();
     }
 
+    // (Hàm resetGame không đổi)
     private void resetGame() {
-        // Reset trạng thái game
         gameManager.score = 0;
         gameManager.lives = 3;
         gameManager.gameState = "Đang chơi";
-
-        //xóa các obj
         gameManager.bricks.clear();
         gameManager.fallingPowerUps.clear();
         gameManager.activeEffects.clear();
-
-        // tạo new obj
         setupGameObjects();
     }
 
+    // (Hàm setupGameObjects không đổi)
     private void setupGameObjects() {
         int paddleWidth = 100;
         int paddleHeight = 20;
@@ -204,9 +315,9 @@ public class Main1 extends Application {
         double gapY = 3;
 
         Level.generateLevel1(gameManager, rows, cols, brickWidth, brickHeight,startX, startY, gapX, gapY);
-
     }
 
+    // (Hàm updateGame không đổi)
     private void updateGame() {
         gameManager.paddle.update();
         gameManager.ball.update();
@@ -315,24 +426,36 @@ public class Main1 extends Application {
         }
     }
 
+
+    // (Hàm renderGame không đổi)
     private void renderGame(GraphicsContext gc) {
-        gc.setFill(Color.BLACK);
-        gc.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+        // 1. Vẽ nền game
+        if (gameBackgroundImage != null) {
+            gc.drawImage(gameBackgroundImage, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+        } else {
+            // Nền dự phòng
+            gc.setFill(Color.BLACK);
+            gc.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+        }
 
-        gc.setFill(Color.BLUE);
-        gc.fillRect(gameManager.paddle.getX(), gameManager.paddle.getY(), gameManager.paddle.getWidth(), gameManager.paddle.getHeight());
+        // 2. Vẽ Paddle (từ ảnh)
+        gameManager.paddle.render(gc);
 
-        gc.setFill(Color.WHITE);
-        gc.fillOval(gameManager.ball.getX(), gameManager.ball.getY(), gameManager.ball.getWidth(), gameManager.ball.getHeight());
+        // 3. Vẽ Ball (từ ảnh)
+        gameManager.ball.render(gc);
 
+        // 4. Vẽ Bricks (từ ảnh)
         for (Brick brick : gameManager.bricks) {
             brick.render(gc);
         }
+
+        // 5. Vẽ Powerups (vẫn là hình tròn)
         gc.setFill(Color.WHITE);
         for (PowerUp powerUp : gameManager.fallingPowerUps) {
             gc.fillOval(powerUp.getX(), powerUp.getY(), 10, 10);
         }
 
+        // 6. Vẽ UI
         gc.setFill(Color.WHITE);
         gc.fillText("Score: " + gameManager.score, 10, 20);
         gc.fillText("Lives: " + gameManager.lives, SCREEN_WIDTH - 60, 20);
