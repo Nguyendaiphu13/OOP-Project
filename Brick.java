@@ -3,13 +3,9 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image; // Thêm import
 import javafx.scene.paint.Color;
 import java.net.URL; // Thêm import
-import java.util.ArrayList;
-import java.util.List;
+
 
 public class Brick extends GameObject {
-    // 'bricks' list không nên ở đây, nó nên ở trong GameManager
-    // public List<Brick> bricks ;
-
     private int hitPoints;
     private String type;
     private Image brickImage; // Thêm biến cho ảnh
@@ -32,21 +28,18 @@ public class Brick extends GameObject {
         loadImage(); // Tải ảnh dựa trên loại và máu
     }
 
+    public int getHitPoints() {
+        return this.hitPoints;
+    }
+
     private void loadImage() {
-        String imageName = "";
-        switch (this.type) {
-            case "2normal":
+        String imageName = switch (this.type) {
+            case "2normal" ->
                 // Chọn ảnh dựa trên số máu còn lại
-                imageName = (this.hitPoints == 2) ? "2normalBrick.png" : "Brick.png";
-                break;
-            case "expand":
-                imageName = "ExpandBrick.png";
-                break;
-            case "normal":
-            default:
-                imageName = "Brick.png";
-                break;
-        }
+                    (this.hitPoints == 2) ? "2normalBrick.png" : "Brick.png";
+            case "expand" -> "ExpandBrick.png";
+            default -> "Brick.png";
+        };
 
         String imagePath = "/com/mygame/mygamearkanoid/images/" + imageName;
         try {
@@ -82,21 +75,13 @@ public class Brick extends GameObject {
         return hitPoints == 0;
     }
 
-    @Override
-    public void update() {
-    }
-
     // Hàm này giờ chỉ dùng làm dự phòng
     private Color getColor() {
-        switch (this.type) {
-            case "2normal":
-                return (this.hitPoints == 2) ? Color.FIREBRICK : Color.ORANGE; // Sửa màu
-            case "expand":
-                return Color.CYAN;
-            case "normal":
-            default:
-                return Color.GREEN ;
-        }
+        return switch (this.type) {
+            case "2normal" -> (this.hitPoints == 2) ? Color.FIREBRICK : Color.ORANGE; // Sửa màu
+            case "expand" -> Color.CYAN;
+            default -> Color.GREEN;
+        };
     }
 
     @Override // Thêm annotation @Override

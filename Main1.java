@@ -28,13 +28,18 @@ import javafx.scene.layout.BackgroundRepeat;
 import javafx.scene.layout.BackgroundSize;
 // --------------------------------------------------
 
+import java.io.File;
+import java.io.IOException;
+
 public class Main1 extends Application {
 
     private GameManager gameManager;
     private SoundManager soundManager;
 
-    private static final int SCREEN_WIDTH = 800;
-    private static final int SCREEN_HEIGHT = 600;
+    private static final String AUTO_SAVE_FILE = "ark_autosave.dat";
+
+    private static final int SCREEN_WIDTH = 900;
+    private static final int SCREEN_HEIGHT = 750;
 
     private Pane gameScreen;
     private VBox menuScreen;
@@ -98,11 +103,42 @@ public class Main1 extends Application {
             }
         };
 
-        showMenuScreen();
+        // --- LOGIC AUTO-LOAD KHI KHỞI ĐỘNG ---
+        File autoSaveFile = new File(AUTO_SAVE_FILE);
+        if (autoSaveFile.exists()) {
+            try {
+                // Thử tải game từ file
+                gameManager.loadGame(AUTO_SAVE_FILE);
+                System.out.println("Tải game từ auto-save thành công!");
+                // Vào thẳng màn hình game
+                showGameScreen(true); // true = bỏ qua resetGame()
+            } catch (Exception e) {
+                // Nếu lỗi, cứ vào menu
+                System.err.println("Lỗi tải auto-save, bắt đầu game mới.");
+                e.printStackTrace();
+                showMenuScreen(); // Vào menu như bình thường
+            }
+        } else {
+            // Không có file save, vào menu
+            showMenuScreen();
+        }
 
         primaryStage.setTitle("OOP Game - JavaFX");
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    @Override
+    public void stop() {
+        // Tự động lưu game nếu đang chơi
+        if (gameManager != null && gameManager.gameState.equals("Đang chơi")) {
+            try {
+                gameManager.saveGame(AUTO_SAVE_FILE);
+                System.out.println("Đã tự động lưu game.");
+            } catch (IOException e) {
+                System.err.println("Lỗi khi tự động lưu game: " + e.getMessage());
+            }
+        }
     }
 
     /**
@@ -110,7 +146,7 @@ public class Main1 extends Application {
      */
     private void loadAllBackgroundImages() {
         String imagePathGame = "/com/mygame/mygamearkanoid/images/BackgroundGame.png";
-        String imagePathMenu = "/com/mygame/mygamearkanoid/images/StartGame1.png";
+        String imagePathMenu = "/com/mygame/mygamearkanoid/images/StartGame.png";
         String imagePathGameOver = "/com/mygame/mygamearkanoid/images/GameOver.png";
 
         try {
@@ -121,7 +157,6 @@ public class Main1 extends Application {
 
         } catch (Exception e) {
             System.err.println("Lỗi nghiêm trọng khi tải ảnh: " + e.getMessage());
-            e.printStackTrace();
         }
 
         if (menuBackgroundImage == null) {
@@ -197,7 +232,7 @@ public class Main1 extends Application {
 
         Button startButton = new Button("Bắt đầu");
         startButton.setFont(new Font("Calibri Light", 20));
-        startButton.setOnAction(_ -> showGameScreen());
+        startButton.setOnAction(_ -> showGameScreen(false));
 
         menuBox.getChildren().addAll(title, startButton);
         return menuBox;
@@ -222,7 +257,7 @@ public class Main1 extends Application {
 
         Button playAgainButton = new Button("Chơi lại");
         playAgainButton.setFont(new Font("Calibri Light", 20));
-        playAgainButton.setOnAction(_ -> showGameScreen());
+        playAgainButton.setOnAction(_ -> showGameScreen(false));
 
         gameOverBox.getChildren().addAll(gameOverLabel, playAgainButton);
         return gameOverBox;
@@ -256,6 +291,13 @@ public class Main1 extends Application {
             gameOverLabel.setTextFill(Color.CYAN);
         }
 
+        File autoSaveFile = new File(AUTO_SAVE_FILE);
+        if (autoSaveFile.exists()) {
+            if (autoSaveFile.delete()) {
+                System.out.println("Đã xoá file auto-save (vì game kết thúc).");
+            }
+        }
+
         menuScreen.setVisible(false);
         gameOverScreen.setVisible(true);
         gameScreen.setVisible(false);
@@ -263,21 +305,27 @@ public class Main1 extends Application {
     }
 
     // --- ĐÃ SỬA LẠI HÀM NÀY ---
-    private void showGameScreen() {
-        resetGame();
+    private void showGameScreen(boolean skipReset) {
+        if (!skipReset) {
+            resetGame(); // Chỉ reset nếu là game mới (bắt đầu từ menu)
+        }
+
+        // Luôn đặt trạng thái là "Đang chơi" khi vào màn hình này
+        gameManager.gameState = "Đang chơi";
+
         menuScreen.setVisible(false);
         gameOverScreen.setVisible(false);
         gameScreen.setVisible(true);
         gameScreen.toFront();
 
-        // --- THÊM DÒNG NÀY ---
-        // Xóa nền của màn hình game over đi
-        // để nó không bị "rò rỉ" qua màn hình game
         gameOverScreen.setBackground(null);
-        // ----------------------
 
         gameLoop.start();
-        soundManager.playOpening();
+
+        // Chỉ chơi nhạc opening nếu là game mới
+        if (!skipReset) {
+            soundManager.playOpening();
+        }
     }
 
     // (Hàm resetGame không đổi)
@@ -293,10 +341,10 @@ public class Main1 extends Application {
 
     // (Hàm setupGameObjects không đổi)
     private void setupGameObjects() {
-        int paddleWidth = 100;
-        int paddleHeight = 20;
+        int paddleWidth = GameManager.PADDLE_WIDTH_DEFAULT;
+        int paddleHeight = GameManager.PADDLE_HEIGHT_DEFAULT;
         double paddleX = (SCREEN_WIDTH - paddleWidth) / 2.0;
-        double paddleY = SCREEN_HEIGHT - paddleHeight - 30;
+        double paddleY = SCREEN_HEIGHT - paddleHeight - 50;
         gameManager.paddle = new Paddle(paddleX, paddleY, paddleWidth, paddleHeight,100);
 
         int ballRadius = 10;
@@ -305,12 +353,12 @@ public class Main1 extends Application {
         double vecDir = 1 / Math.sqrt(2);
         gameManager.ball = new Ball(ballX, ballY, ballRadius * 2, ballRadius * 2, 5.0, vecDir, -vecDir, ballRadius);
 
-        int rows = 5;
-        int cols = 10;
+        int rows = 6;
+        int cols = 11;
         int brickWidth = 70;
         int brickHeight = 20;
-        double startX = 35;
-        double startY = 50;
+        double startX = 45;
+        double startY = 90;
         double gapX = 3;
         double gapY = 3;
 
