@@ -1,34 +1,19 @@
 package com.mygame.mygamearkanoid;
 
-
-// 1. Xóa 'abstract'
+// File này bị thiếu trong danh sách của bạn nhưng được gọi trong Main1
 public class ExpandPaddlePowerUp extends PowerUp {
-
-    public int expandAmount = 50;
-    private boolean effectApplied = false; // biến để theo dõi powerup
-
     public ExpandPaddlePowerUp(double x, double y) {
-        super(x, y, 20, 20, "ExpandPaddle", 10000); // 5 giây
+        // Kích thước (width, height) ở đây không quá quan trọng
+        super(x, y, 20, 20, "expand", 8000);
     }
 
     @Override
     public void applyEffect(Paddle paddle, Ball ball) {
-        // chỉ áp dụng hiệu ứng nếu nó chưa được áp dụng
-        if (!effectApplied) {
-            paddle.setWidth(paddle.getWidth() + expandAmount);
-            effectApplied = true;
-            System.out.println("Tăng kích thước paddle");
-        }
+        paddle.setWidth((int)(GameManager.PADDLE_WIDTH_DEFAULT * 1.5));
     }
 
     @Override
     public void removeEffect(Paddle paddle, Ball ball) {
-        // Chỉ gỡ bỏ hiệu ứng nếu nó đã được áp dụng
-        if (effectApplied) {
-            paddle.setWidth(paddle.getWidth() - expandAmount);
-            effectApplied = false;
-            this.setActive(false); // Đánh dấu power-up này là "chết" hoàn toàn
-            System.out.println("Hết hiệu lực");
-        }
+        paddle.setWidth(GameManager.PADDLE_WIDTH_DEFAULT);
     }
 }
