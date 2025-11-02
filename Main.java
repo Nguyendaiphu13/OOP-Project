@@ -1,4 +1,4 @@
-
+package org.example.demo;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
@@ -160,7 +160,7 @@ public class Main extends Application {
 
         Button playAgainButton = new Button("Chơi lại");
         playAgainButton.setFont(new Font("Calibri Light", 20));
-        playAgainButton.setOnAction(_ -> showGameScreen());
+        playAgainButton.setOnAction(e -> showGameScreen());
 
         gameOverBox.getChildren().addAll(gameOverLabel, playAgainButton);
         return gameOverBox;

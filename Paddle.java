@@ -1,4 +1,4 @@
-package com.mygame.mygamearkanoid;
+package org.example.demo;
 
 import javafx.scene.image.Image;
 import java.net.URL;

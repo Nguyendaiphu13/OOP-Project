@@ -1,4 +1,4 @@
-package com.mygame.mygamearkanoid;
+package org.example.demo;
 
 import javafx.scene.canvas.GraphicsContext; // Thêm import
 import javafx.scene.image.Image; // Thêm import

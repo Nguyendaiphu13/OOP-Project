@@ -1,3 +1,5 @@
+package org.example.demo;
+
 public abstract class FastBallPowerUp extends PowerUp{
     // tăng tốc độ bóng
 

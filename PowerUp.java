@@ -1,4 +1,4 @@
-package com.mygame.mygamearkanoid;
+package org.example.demo;
 
 public abstract class PowerUp extends GameObject {
     protected String type;

@@ -1,3 +1,5 @@
+package org.example.demo;
+
 abstract class GameObject {
     protected double x,y;
     protected int width, height;

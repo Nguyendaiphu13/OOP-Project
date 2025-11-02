@@ -1,4 +1,4 @@
-package com.mygame.mygamearkanoid;
+package org.example.demo;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
@@ -53,6 +53,10 @@ public class Main1 extends Application {
     private Image gameBackgroundImage;
     private Image menuBackgroundImage;  // <-- THÊM CÁI NÀY
     private Image gameOverBackgroundImage; // <-- THÊM CÁI NÀY
+
+    private double paddleDriftSpeed = 1.5;
+    private long lastBrickSpawnTime = 0;
+    private final long BRICK_SPAWN_INTERVAL = 10000;
 
     @Override
     public void start(Stage primaryStage) {
@@ -232,35 +236,41 @@ public class Main1 extends Application {
 
         Button startButton = new Button("Bắt đầu");
         startButton.setFont(new Font("Calibri Light", 20));
-        startButton.setOnAction(_ -> showGameScreen(false));
+        startButton.setOnAction(e -> showGameScreen(false));
 
         menuBox.getChildren().addAll(title, startButton);
         return menuBox;
     }
 
     // --- ĐÃ SỬA LẠI HÀM NÀY ---
-    private VBox createGameOverScreen() {
-        VBox gameOverBox = new VBox(20);
-        gameOverBox.setAlignment(Pos.CENTER);
+    private VBox createMenuScreen() {
+        VBox menuBox = new VBox(20);
+        menuBox.setAlignment(Pos.CENTER);
 
-        // --- XÓA DÒNG setStyle(...) ĐI ---
-        // gameOverBox.setStyle( ... );
+        if (menuBackgroundImage != null) {
+            menuBox.setBackground(createBackgroundImage(menuBackgroundImage));
+        } else {
+            menuBox.setStyle("-fx-background-color: black;");
+        }
 
-        // --- THAY BẰNG CODE JAVA NÀY ---
-        // Chúng ta sẽ set nền trong hàm showGameOverScreen()
-        // để nó luôn cập nhật đúng
-        gameOverBox.setStyle("-fx-background-color: transparent;");
-        // --------------------------------
+        Button standardButton = new Button("Classic");
+        standardButton.setFont(new Font("Calibri Light", 20));
+        standardButton.setOnAction(_ -> {
+            gameManager.gameMode = "Standard";
+            gameManager.currentLevel = 1; // Luôn bắt đầu từ level 1
+            showGameScreen(false); // false = reset game
+        });
 
-        gameOverLabel = new Label();
-        gameOverLabel.setFont(new Font("Calibri Light", 30));
+        Button endlessButton = new Button("Adventure");
+        endlessButton.setFont(new Font("Calibri Light", 20));
+        endlessButton.setOnAction(_ -> {
+            gameManager.gameMode = "Endless";
+            gameManager.currentLevel = 1; // Endless cũng bắt đầu từ level 1
+            showGameScreen(false); // false = reset game
+        });
 
-        Button playAgainButton = new Button("Chơi lại");
-        playAgainButton.setFont(new Font("Calibri Light", 20));
-        playAgainButton.setOnAction(_ -> showGameScreen(false));
-
-        gameOverBox.getChildren().addAll(gameOverLabel, playAgainButton);
-        return gameOverBox;
+        menuBox.getChildren().addAll(title, standardButton, endlessButton);
+        return menuBox;
     }
 
     // (Hàm showMenuScreen không đổi)
@@ -304,13 +314,11 @@ public class Main1 extends Application {
         gameOverScreen.toFront();
     }
 
-    // --- ĐÃ SỬA LẠI HÀM NÀY ---
+
     private void showGameScreen(boolean skipReset) {
         if (!skipReset) {
-            resetGame(); // Chỉ reset nếu là game mới (bắt đầu từ menu)
+            resetGame();
         }
-
-        // Luôn đặt trạng thái là "Đang chơi" khi vào màn hình này
         gameManager.gameState = "Đang chơi";
 
         menuScreen.setVisible(false);
@@ -322,13 +330,11 @@ public class Main1 extends Application {
 
         gameLoop.start();
 
-        // Chỉ chơi nhạc opening nếu là game mới
         if (!skipReset) {
             soundManager.playOpening();
         }
     }
 
-    // (Hàm resetGame không đổi)
     private void resetGame() {
         gameManager.score = 0;
         gameManager.lives = 3;
@@ -337,9 +343,11 @@ public class Main1 extends Application {
         gameManager.fallingPowerUps.clear();
         gameManager.activeEffects.clear();
         setupGameObjects();
+        loadLevel(gameManager.currentLevel);
+        lastBrickSpawnTime = System.currentTimeMillis();
+        paddleDriftSpeed = Math.abs(paddleDriftSpeed);
     }
 
-    // (Hàm setupGameObjects không đổi)
     private void setupGameObjects() {
         int paddleWidth = GameManager.PADDLE_WIDTH_DEFAULT;
         int paddleHeight = GameManager.PADDLE_HEIGHT_DEFAULT;
@@ -365,11 +373,67 @@ public class Main1 extends Application {
         Level.generateLevel1(gameManager, rows, cols, brickWidth, brickHeight,startX, startY, gapX, gapY);
     }
 
-    // (Hàm updateGame không đổi)
+    private void renderGame(GraphicsContext gc) {
+        if (gameBackgroundImage != null) {
+            gc.drawImage(gameBackgroundImage, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+        } else {
+            gc.setFill(Color.BLACK);
+            gc.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+        }
+
+        gameManager.paddle.render(gc);
+        gameManager.ball.render(gc);
+
+        for (Brick brick : gameManager.bricks) {
+            brick.render(gc);
+        }
+
+        gc.setFill(Color.WHITE);
+        for (PowerUp powerUp : gameManager.fallingPowerUps) {
+            gc.fillOval(powerUp.getX(), powerUp.getY(), 10, 10);
+        }
+
+        gc.setFill(Color.WHITE);
+        gc.setFont(new Font("Calibri Light", 18));
+        gc.fillText("Score: " + gameManager.score, 10, 30);
+        gc.fillText("Lives: " + gameManager.lives, SCREEN_WIDTH - 70, 30);
+
+        String modeText = gameManager.gameMode.equals("Endless") ? "Endless Mode" : "Level: " + gameManager.currentLevel;
+        gc.fillText(modeText, SCREEN_WIDTH / 2.0 - 50, 30);
+
+    }
+    private void shiftAndSpawnBricks() {
+        double shiftAmount = BRICK_HEIGHT + BRICK_GAP_Y;
+        boolean isGameOver = false;
+        for (Brick brick : gameManager.bricks) {
+            brick.setY(brick.getY() + shiftAmount);
+            if (brick.getY() + brick.getHeight() >= gameManager.paddle.getY() - 10) {
+                isGameOver = true;
+            }
+        }
+        gameManager.bricks.removeIf(b -> b.getY() > SCREEN_HEIGHT);
+
+        if (isGameOver) {
+            gameManager.gameOver();
+            return;
+        }
+        Level.generateBrickRow(gameManager, BRICK_COLS, BRICK_WIDTH, BRICK_HEIGHT, BRICK_START_X, BRICK_START_Y, BRICK_GAP_X);
+    }
     private void updateGame() {
+        if (gameManager.gameMode.equals("Standard") && gameManager.currentLevel == 2) {
+            gameManager.paddle.setX(gameManager.paddle.getX() + paddleDriftSpeed);
+
+            if (gameManager.paddle.getX() < 0) {
+                gameManager.paddle.setX(0);
+                paddleDriftSpeed = Math.abs(paddleDriftSpeed);
+            }
+            if (gameManager.paddle.getX() + gameManager.paddle.getWidth() > SCREEN_WIDTH) {
+                gameManager.paddle.setX(SCREEN_WIDTH - gameManager.paddle.getWidth());
+                paddleDriftSpeed = -Math.abs(paddleDriftSpeed);
+            }
+        }
         gameManager.paddle.update();
         gameManager.ball.update();
-
         if (gameManager.paddle.getX() < 0) {
             gameManager.paddle.setX(0);
         }
@@ -414,11 +478,25 @@ public class Main1 extends Application {
                 }
             }
         }
-
         if (gameManager.bricks.isEmpty()) {
-            gameManager.gameState = "Thắng";
+            if (gameManager.gameMode.equals("Standard")) {
+                gameManager.currentLevel++;
+                if (gameManager.currentLevel > 2) {
+                    gameManager.gameState = "Thắng";
+                } else {
+                    soundManager.playOpening();
+                    loadLevel(gameManager.currentLevel);
+                }
+            }
         }
 
+        if (gameManager.gameMode.equals("Endless")) {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - lastBrickSpawnTime > BRICK_SPAWN_INTERVAL) {
+                shiftAndSpawnBricks();
+                lastBrickSpawnTime = currentTime;
+            }
+        }
         Iterator<PowerUp> powerUpIterator = gameManager.fallingPowerUps.iterator();
         while (powerUpIterator.hasNext()) {
             PowerUp powerUp = powerUpIterator.next();
@@ -444,7 +522,7 @@ public class Main1 extends Application {
         }
 
         if (!gameManager.activeEffects.isEmpty()) {
-            PowerUp currentEffect = gameManager.activeEffects.getFirst();
+            PowerUp currentEffect = gameManager.activeEffects.get(0);
             long elapsedTime = System.currentTimeMillis() - gameManager.effectStartTime;
 
             if (elapsedTime > currentEffect.getDuration()) {
@@ -458,57 +536,11 @@ public class Main1 extends Application {
             if (gameManager.lives <= 0) {
                 gameManager.gameOver();
             } else {
-                double paddleCenterX = gameManager.paddle.getX() + gameManager.paddle.getWidth() / 2.0;
-                double newBallX = paddleCenterX - gameManager.ball.getWidth() / 2.0;
-                double newBallY = gameManager.paddle.getY() - gameManager.ball.getHeight() - 5;
-
-                gameManager.ball.setX(newBallX);
-                gameManager.ball.setY(newBallY);
-
-                double initialDir = 1 / Math.sqrt(2);
-                gameManager.ball.directionX = initialDir;
-                gameManager.ball.directionY = -initialDir;
-                gameManager.ball.updateVelocity();
-                gameManager.ball.alive = true;
+                // Đặt lại bóng và paddle
+                resetBallAndPaddle();
             }
         }
     }
-
-
-    // (Hàm renderGame không đổi)
-    private void renderGame(GraphicsContext gc) {
-        // 1. Vẽ nền game
-        if (gameBackgroundImage != null) {
-            gc.drawImage(gameBackgroundImage, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-        } else {
-            // Nền dự phòng
-            gc.setFill(Color.BLACK);
-            gc.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-        }
-
-        // 2. Vẽ Paddle (từ ảnh)
-        gameManager.paddle.render(gc);
-
-        // 3. Vẽ Ball (từ ảnh)
-        gameManager.ball.render(gc);
-
-        // 4. Vẽ Bricks (từ ảnh)
-        for (Brick brick : gameManager.bricks) {
-            brick.render(gc);
-        }
-
-        // 5. Vẽ Powerups (vẫn là hình tròn)
-        gc.setFill(Color.WHITE);
-        for (PowerUp powerUp : gameManager.fallingPowerUps) {
-            gc.fillOval(powerUp.getX(), powerUp.getY(), 10, 10);
-        }
-
-        // 6. Vẽ UI
-        gc.setFill(Color.WHITE);
-        gc.fillText("Score: " + gameManager.score, 10, 20);
-        gc.fillText("Lives: " + gameManager.lives, SCREEN_WIDTH - 60, 20);
-    }
-
     public static void main(String[] args) {
         launch(args);
     }

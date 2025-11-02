@@ -1,4 +1,4 @@
-package com.mygame.mygamearkanoid;
+package org.example.demo;
 
 // File này bị thiếu trong danh sách của bạn nhưng được gọi trong Main1
 public class ExpandPaddlePowerUp extends PowerUp {

@@ -1,4 +1,4 @@
-package com.mygame.mygamearkanoid;
+package org.example.demo;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -12,10 +12,14 @@ public class GameSave implements Serializable {
     // Dữ liệu chung
     public int score;
     public int lives;
+    // --- TÍNH NĂNG MỚI ---
+    public int currentLevel;
+    public String gameMode;
+    // ---------------------
 
     // Dữ liệu Paddle
     public double paddleX;
-    public int paddleWidth; // Lưu cả chiều rộng vì nó thay đổi
+    public int paddleWidth;
 
     // Dữ liệu Ball
     public double ballX, ballY;

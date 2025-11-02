@@ -1,4 +1,4 @@
-package com.mygame.mygamearkanoid;
+package org.example.demo;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image; // Thêm import
 import javafx.scene.paint.Color;
@@ -33,13 +33,19 @@ public class Brick extends GameObject {
     }
 
     private void loadImage() {
-        String imageName = switch (this.type) {
-            case "2normal" ->
+        String imageName; // Khai báo biến ở ngoài
+        switch (this.type) {
+            case "2normal":
                 // Chọn ảnh dựa trên số máu còn lại
-                    (this.hitPoints == 2) ? "2normalBrick.png" : "Brick.png";
-            case "expand" -> "ExpandBrick.png";
-            default -> "Brick.png";
-        };
+                imageName = (this.hitPoints == 2) ? "2normalBrick.png" : "Brick.png";
+                break;
+            case "expand":
+                imageName = "ExpandBrick.png";
+                break;
+            default:
+                imageName = "Brick.png";
+                break;
+        }
 
         String imagePath = "/com/mygame/mygamearkanoid/images/" + imageName;
         try {
@@ -77,11 +83,14 @@ public class Brick extends GameObject {
 
     // Hàm này giờ chỉ dùng làm dự phòng
     private Color getColor() {
-        return switch (this.type) {
-            case "2normal" -> (this.hitPoints == 2) ? Color.FIREBRICK : Color.ORANGE; // Sửa màu
-            case "expand" -> Color.CYAN;
-            default -> Color.GREEN;
-        };
+        switch (this.type) {
+            case "2normal":
+                return (this.hitPoints == 2) ? Color.FIREBRICK : Color.ORANGE;
+            case "expand":
+                return Color.CYAN;
+            default:
+                return Color.GREEN;
+        }
     }
 
     @Override // Thêm annotation @Override

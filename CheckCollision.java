@@ -45,6 +45,7 @@ public class CheckCollision {
     }
 
     // check va chạm với obj khác như brick và paddle
+    // check va chạm với obj khác như brick và paddle
     public static void bounceOff(Ball ball, GameObject other) {
         if (other instanceof Brick) {
             // lấy tọa độ tâm của bóng và gạch
@@ -86,25 +87,30 @@ public class CheckCollision {
                 }
             }
 
-            } else if (other instanceof Paddle paddle) {
-                // va chạm với paddle
-                double paddleCenter = paddle.getX() + paddle.getWidth() / 2.0;
-                double ballCenter = ball.getX() + ball.getWidth() / 2.0;
+            // ======== SỬA LỖI JAVA 11 BẮT ĐẦU TỪ ĐÂY ========
+        } else if (other instanceof Paddle) {
+            // Ép kiểu (cast) tường minh về Paddle
+            Paddle paddle = (Paddle) other;
+            // ======== KẾT THÚC SỬA LỖI ========
 
-                // Tính toán vị trí va chạm tương đối trên thanh trượt (-1 đến 1)
-                double hitPos = (ballCenter - paddleCenter) / (paddle.getWidth() / 2.0);
-                hitPos = Math.max(-1.0, Math.min(1.0, hitPos)); // Giới hạn giá trị
+            // va chạm với paddle
+            double paddleCenter = paddle.getX() + paddle.getWidth() / 2.0;
+            double ballCenter = ball.getX() + ball.getWidth() / 2.0;
 
-                // góc nảy tối đa
-                double maxAngle = Math.toRadians(60);
-                double angle = hitPos * maxAngle;
+            // Tính toán vị trí va chạm tương đối trên thanh trượt (-1 đến 1)
+            double hitPos = (ballCenter - paddleCenter) / (paddle.getWidth() / 2.0);
+            hitPos = Math.max(-1.0, Math.min(1.0, hitPos)); // Giới hạn giá trị
 
-                // tính toán hướng mới dựa trên góc
-                ball.directionX = Math.sin(angle);
-                ball.directionY = -Math.cos(angle); // Hướng lên trên
-            }
+            // góc nảy tối đa
+            double maxAngle = Math.toRadians(60);
+            double angle = hitPos * maxAngle;
 
-            // ập nhật lại vận tốc của bóng sau khi đổi hướng
-            ball.updateVelocity();
+            // tính toán hướng mới dựa trên góc
+            ball.directionX = Math.sin(angle);
+            ball.directionY = -Math.cos(angle); // Hướng lên trên
         }
+
+        // ập nhật lại vận tốc của bóng sau khi đổi hướng
+        ball.updateVelocity();
     }
+}
