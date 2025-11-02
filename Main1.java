@@ -16,6 +16,8 @@ import javafx.scene.control.Label;
 import javafx.geometry.Pos;
 import javafx.scene.text.Font;
 
+import javafx.geometry.Insets;
+
 import javafx.scene.image.Image;
 import java.net.URL;
 import java.util.Iterator;
@@ -30,34 +32,58 @@ import javafx.scene.layout.BackgroundSize;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 public class Main1 extends Application {
 
     private GameManager gameManager;
     private SoundManager soundManager;
+    private HighScoreManager highScoreManager;
 
-    private static final String AUTO_SAVE_FILE = "ark_autosave.dat";
+    private static final String AUTO_SAVE_FILE = "autoSaveFile";
 
     private static final int SCREEN_WIDTH = 900;
     private static final int SCREEN_HEIGHT = 750;
 
     private Pane gameScreen;
     private VBox menuScreen;
+    private VBox highScoreScreen;
     private VBox gameOverScreen;
     private Label gameOverLabel;
+    private VBox highScoreDisplayList;
 
     private GraphicsContext gc;
     private AnimationTimer gameLoop;
+
+    private Font pixelFont;
 
     // --- BIẾN CHO TẤT CẢ ẢNH NỀN ---
     private Image gameBackgroundImage;
     private Image menuBackgroundImage;  // <-- THÊM CÁI NÀY
     private Image gameOverBackgroundImage; // <-- THÊM CÁI NÀY
+    private Image highScoreBackgroundImage;
 
     @Override
     public void start(Stage primaryStage) {
         gameManager = new GameManager();
         soundManager = new SoundManager();
+        highScoreManager = new HighScoreManager();
+
+        try {
+            // Đường dẫn bắt đầu từ thư mục "resources"
+            String fontPath = "/com/mygame/mygamearkanoid/fonts/VT323-Regular.ttf";
+            pixelFont = Font.loadFont(getClass().getResourceAsStream(fontPath), 20); // 20 là kích cỡ mặc định
+
+            if (pixelFont == null) {
+                System.err.println("Không thể tải font! Dùng font mặc định.");
+                pixelFont = Font.font("Consolas", 20); // Font dự phòng
+            } else {
+                System.out.println("Đã tải font thành công.");
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi khi tải font: " + e.getMessage());
+            pixelFont = Font.font("Consolas", 20); // Font dự phòng
+        }
 
         StackPane rootPane = new StackPane();
 
@@ -70,9 +96,10 @@ public class Main1 extends Application {
         // 3. Tạo các màn hình còn lại (VBox)
         menuScreen = createMenuScreen();
         gameOverScreen = createGameOverScreen();
+        highScoreScreen = createHighScoreScreen();
 
         // 4. Thêm tất cả vào rootPane
-        rootPane.getChildren().addAll(gameScreen, gameOverScreen, menuScreen);
+        rootPane.getChildren().addAll(gameScreen, gameOverScreen,highScoreScreen, menuScreen);
 
         Scene scene = new Scene(rootPane, SCREEN_WIDTH, SCREEN_HEIGHT);
 
@@ -145,14 +172,15 @@ public class Main1 extends Application {
      * Hàm mới: Tải tất cả ảnh nền ở một nơi
      */
     private void loadAllBackgroundImages() {
-        String imagePathGame = "/com/mygame/mygamearkanoid/images/BackgroundGame.png";
-        String imagePathMenu = "/com/mygame/mygamearkanoid/images/StartGame.png";
-        String imagePathGameOver = "/com/mygame/mygamearkanoid/images/GameOver.png";
+        String imagePathGame = "/com/mygame/mygamearkanoid/images/BackgroundGame10.png";
+        String imagePathMenu = "/com/mygame/mygamearkanoid/images/StartGame10.png";
+        String imagePathGameOver = "/com/mygame/mygamearkanoid/images/GameOver10.png";
+        String imagePathHighScore = "/com/mygame/mygamearkanoid/images/HighScores10.png";
 
         try {
             gameBackgroundImage = loadImage(imagePathGame);
             menuBackgroundImage = loadImage(imagePathMenu);
-
+            highScoreBackgroundImage = loadImage(imagePathHighScore);
             gameOverBackgroundImage = loadImage(imagePathGameOver);
 
         } catch (Exception e) {
@@ -161,6 +189,9 @@ public class Main1 extends Application {
 
         if (menuBackgroundImage == null) {
             System.err.println("Không thể tải ảnh nền Menu: " + imagePathMenu);
+        }
+        if (highScoreBackgroundImage == null) {
+            System.err.println("Không thể tải ảnh nền High Score: " + imagePathHighScore);
         }
         if (gameOverBackgroundImage == null) {
             System.err.println("Không thể tải ảnh nền Game Over: " + imagePathGameOver);
@@ -234,7 +265,11 @@ public class Main1 extends Application {
         startButton.setFont(new Font("Calibri Light", 20));
         startButton.setOnAction(_ -> showGameScreen(false));
 
-        menuBox.getChildren().addAll(title, startButton);
+        Button highScoreButton = new Button("Bảng Xếp Hạng");
+        highScoreButton.setFont(new Font("Calibri Light", 20));
+        highScoreButton.setOnAction(_ -> showHighScoreScreen());
+
+        menuBox.getChildren().addAll(title, startButton, highScoreButton);
         return menuBox;
     }
 
@@ -269,6 +304,7 @@ public class Main1 extends Application {
         menuScreen.setVisible(true);
         gameOverScreen.setVisible(false);
         gameScreen.setVisible(false);
+        highScoreScreen.setVisible(false);
         menuScreen.toFront();
     }
 
@@ -290,6 +326,8 @@ public class Main1 extends Application {
             gameOverLabel.setText(" YOU WIN!\nFinal Score: " + gameManager.score);
             gameOverLabel.setTextFill(Color.CYAN);
         }
+
+        highScoreManager.addScore(gameManager.score);
 
         File autoSaveFile = new File(AUTO_SAVE_FILE);
         if (autoSaveFile.exists()) {
@@ -328,6 +366,100 @@ public class Main1 extends Application {
         }
     }
 
+    /**
+     * HÀM MỚI: Tạo màn hình Bảng Xếp Hạng
+     */
+    private VBox createHighScoreScreen() {
+        VBox highScoreBox = new VBox(20);
+        highScoreBox.setAlignment(Pos.CENTER);
+
+        // Đặt ảnh nền khủng long
+        if (highScoreBackgroundImage != null) {
+            highScoreBox.setBackground(createBackgroundImage(highScoreBackgroundImage));
+        } else {
+            // Nền dự phòng nếu ảnh lỗi
+            highScoreBox.setStyle("-fx-background-color: black;");
+        }
+
+        // Tiêu đề (chúng ta sẽ ẩn nó đi vì ảnh nền đã có chữ)
+        Label title = new Label("Bảng Xếp Hạng");
+        title.setFont(new Font("Calibri Light", 40));
+        title.setTextFill(Color.WHITE);
+        title.setVisible(false); // <-- ẨN TIÊU ĐỀ
+
+        // VBox này sẽ chứa danh sách các điểm số
+        highScoreDisplayList = new VBox(10);
+        highScoreDisplayList.setAlignment(Pos.CENTER);
+
+        // Nút để quay lại menu
+        Button backButton = new Button("Quay Lại Menu");
+        backButton.setFont(new Font("Calibri Light", 20));
+        backButton.setOnAction(_ -> showMenuScreen());
+
+        // Thêm các thành phần vào màn hình
+        highScoreBox.getChildren().addAll(title, highScoreDisplayList, backButton);
+        highScoreBox.setVisible(false); // Ẩn nó đi lúc ban đầu
+        return highScoreBox;
+    }
+
+    /**
+     * HÀM MỚI: Hiển thị màn hình Bảng Xếp Hạng
+     */
+    private void showHighScoreScreen() {
+        // Cập nhật danh sách điểm MỖI KHI mở
+        updateHighScoreDisplay();
+
+        gameManager.gameState = "Menu"; // Chuyển trạng thái game về Menu
+        menuScreen.setVisible(false);
+        gameOverScreen.setVisible(false);
+        gameScreen.setVisible(false);
+        highScoreScreen.setVisible(true); // <-- HIỆN màn hình Bảng Xếp Hạng
+        highScoreScreen.toFront();
+    }
+
+    /**
+     * HÀM MỚI: Cập nhật và căn chỉnh danh sách điểm
+     */
+    private void updateHighScoreDisplay() {
+        highScoreDisplayList.getChildren().clear(); // Xóa điểm cũ
+
+        // Lấy danh sách điểm (List<Integer>)
+        List<Integer> scores = highScoreManager.getHighScores();
+
+        // --- CĂN CHỈNH CHO KHỚP VỚI ẢNH NỀN ---
+
+        // 1. Đẩy danh sách điểm xuống (140 pixels) để vào giữa bảng đá
+        highScoreDisplayList.setPadding(new Insets(0, 0, 108, 55));
+
+        // 2. Giảm khoảng cách giữa các dòng
+        highScoreDisplayList.setSpacing(5);
+
+        // 3. Đặt chiều rộng cố định để căn giữa
+        highScoreDisplayList.setPrefWidth(300);
+        highScoreDisplayList.setMaxWidth(300);
+        // ----------------------------------------
+
+        if (scores.isEmpty()) {
+            Label emptyLabel = new Label("--- Chưa có điểm ---");
+            emptyLabel.setFont(Font.font(pixelFont.getFamily(), 18));
+            emptyLabel.setTextFill(Color.rgb(200, 200, 200));
+            highScoreDisplayList.getChildren().add(emptyLabel);
+        } else {
+            int rank = 1;
+            for (Integer score : scores) {
+                // Định dạng hiển thị: " 1. 12500"
+                Label scoreLabel = new Label(String.format("%2d. %d", rank, score));
+
+                // Dùng font và màu cho khớp với ảnh
+                scoreLabel.setFont(Font.font(pixelFont.getFamily(), 25));
+                scoreLabel.setTextFill(Color.rgb(255, 255, 150)); // Màu vàng nhạt
+
+                highScoreDisplayList.getChildren().add(scoreLabel);
+                rank++;
+            }
+        }
+    }
+
     // (Hàm resetGame không đổi)
     private void resetGame() {
         gameManager.score = 0;
@@ -357,7 +489,7 @@ public class Main1 extends Application {
         int cols = 11;
         int brickWidth = 70;
         int brickHeight = 20;
-        double startX = 45;
+        double startX = 50;
         double startY = 90;
         double gapX = 3;
         double gapY = 3;
