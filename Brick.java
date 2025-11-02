@@ -10,6 +10,15 @@ public class Brick extends GameObject {
     private String type;
     private Image brickImage; // Thêm biến cho ảnh
 
+    public int BRICK_ROWS = 6;
+    public int BRICK_COLS = 11;
+    public int BRICK_WIDTH = 70;
+    public int BRICK_HEIGHT = 20;
+    public double BRICK_START_X = 45;
+    public double BRICK_START_Y = 90;
+    public double BRICK_GAP_X = 3;
+    public double BRICK_GAP_Y = 3;
+
     public Brick(double x, double y, int width, int height, String type) {
         super(x, y, width, height);
         this.type = type;
@@ -106,3 +115,4 @@ public class Brick extends GameObject {
         }
     }
 }
+
