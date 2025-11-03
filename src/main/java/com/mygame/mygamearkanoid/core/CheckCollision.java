@@ -49,66 +49,66 @@ public class CheckCollision {
     }
 
     // check va chạm với obj khác như brick và paddle
-    public static void bounceOff(Ball ball, GameObject other) {
-        if (other instanceof Brick) {
-            // lấy tọa độ tâm của bóng và gạch
-            double ballCenterX = ball.getX() + ball.getWidth() / 2.0;
-            double ballCenterY = ball.getY() + ball.getHeight() / 2.0;
-            double brickCenterX = other.getX() + other.getWidth() / 2.0;
-            double brickCenterY = other.getY() + other.getHeight() / 2.0;
+    // *** HÀM MỚI 1: CHỈ DÀNH CHO PADDLE ***
+    public static void bounceOffPaddle(Ball ball, Paddle paddle) {
+        double paddleCenter = paddle.getX() + paddle.getWidth() / 2.0;
+        double ballCenter = ball.getX() + ball.getWidth() / 2.0;
 
-            /* (ball.getWidth() / 2.0 + other.getWidth() / 2.0) đây là khoảng cách tối thiểu giữa 2 tâm
-                Math.abs(ballCenterX - brickCenterX) : đây là khoảng cách thực tế giữa 2 ta
-             */
+        double hitPos = (ballCenter - paddleCenter) / (paddle.getWidth() / 2.0);
+        hitPos = Math.max(-1.0, Math.min(1.0, hitPos));
 
-            /* overlapX là độ lún của bóng so với bề ngang của gạch, nếu
-            overlapX mà > 0 thì nghĩa là nó đang lún vào theo chiều ngang
-             */
-            double overlapX = (ball.getWidth() / 2.0 + other.getWidth() / 2.0) - Math.abs(ballCenterX - brickCenterX);
-            double overlapY = (ball.getHeight() / 2.0 + other.getHeight() / 2.0) - Math.abs(ballCenterY - brickCenterY);
+        double maxAngle = Math.toRadians(60);
+        double angle = hitPos * maxAngle;
 
-            if (overlapX < overlapY) {
-                // overlapX < overlapY là độ lún chiều ngang lớn hơn chiều dọc -> va chạm xảy ra ở cạnh bên
+        ball.directionX = Math.sin(angle);
+        ball.directionY = -Math.cos(angle); // Hướng lên trên
+
+        // Paddle bounce CẦN cập nhật vận tốc ngay
+        ball.updateVelocity();
+    }
+
+    // *** HÀM MỚI 2: CHỈ DÀNH CHO BRICK (Với logic cờ) ***
+    // Trả về cờ [hasBouncedX, hasBouncedY] đã cập nhật
+    public static boolean[] bounceOffBrick(Ball ball, Brick brick, boolean hasBouncedX, boolean hasBouncedY) {
+        // Lấy tọa độ tâm
+        double ballCenterX = ball.getX() + ball.getWidth() / 2.0;
+        double ballCenterY = ball.getY() + ball.getHeight() / 2.0;
+        double brickCenterX = brick.getX() + brick.getWidth() / 2.0;
+        double brickCenterY = brick.getY() + brick.getHeight() / 2.0;
+
+        // Tính toán độ lún
+        double overlapX = (ball.getWidth() / 2.0 + brick.getWidth() / 2.0) - Math.abs(ballCenterX - brickCenterX);
+        double overlapY = (ball.getHeight() / 2.0 + brick.getHeight() / 2.0) - Math.abs(ballCenterY - brickCenterY);
+
+        if (overlapX < overlapY) {
+            // Va chạm cạnh bên
+            if (!hasBouncedX) { // *** CHỈ LẬT HƯỚNG KHI CỜ LÀ FALSE ***
                 ball.directionX *= -1;
-                /* nếu vận tốc dx trước va chạm là dương (bóng đang đi sang phải)
-                thì có nghĩa là nó đã va vào cạnh trái của gạch :
-                -> cho bóng lùi lại
-                 */
-                if (ball.getDx() > 0) {
-                    ball.setX(ball.getX() - overlapX);
-                } else {
-                    ball.setX(ball.getX() + overlapX);
-                }
-            } else {
-                ball.directionY *= -1;
-                if (ball.getDy() > 0) {
-                    // tương tự
-                    ball.setY(ball.getY() - overlapY);
-                } else {
-                    ball.setY(ball.getY() + overlapY);
-
-                }
+                hasBouncedX = true; // Cập nhật cờ
             }
 
-        } else if (other instanceof Paddle paddle) {
-            // va chạm với paddle
-            double paddleCenter = paddle.getX() + paddle.getWidth() / 2.0;
-            double ballCenter = ball.getX() + ball.getWidth() / 2.0;
+            // Luôn sửa vị trí
+            if (ball.getDx() > 0) {
+                ball.setX(ball.getX() - overlapX);
+            } else {
+                ball.setX(ball.getX() + overlapX);
+            }
+        } else {
+            // Va chạm cạnh trên/dưới
+            if (!hasBouncedY) { // *** CHỈ LẬT HƯỚNG KHI CỜ LÀ FALSE ***
+                ball.directionY *= -1;
+                hasBouncedY = true; // Cập nhật cờ
+            }
 
-            // Tính toán vị trí va chạm tương đối trên thanh trượt (-1 đến 1)
-            double hitPos = (ballCenter - paddleCenter) / (paddle.getWidth() / 2.0);
-            hitPos = Math.max(-1.0, Math.min(1.0, hitPos)); // Giới hạn giá trị
-
-            // góc nảy tối đa
-            double maxAngle = Math.toRadians(60);
-            double angle = hitPos * maxAngle;
-
-            // tính toán hướng mới dựa trên góc
-            ball.directionX = Math.sin(angle);
-            ball.directionY = -Math.cos(angle); // Hướng lên trên
+            // Luôn sửa vị trí
+            if (ball.getDy() > 0) {
+                ball.setY(ball.getY() - overlapY);
+            } else {
+                ball.setY(ball.getY() + overlapY);
+            }
         }
 
-        // ập nhật lại vận tốc của bóng sau khi đổi hướng
-        ball.updateVelocity();
+        // Trả về cờ đã cập nhật
+        return new boolean[]{hasBouncedX, hasBouncedY};
     }
 }
