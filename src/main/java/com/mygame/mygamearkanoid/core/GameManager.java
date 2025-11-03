@@ -49,7 +49,7 @@ public class GameManager {
         this.score = 0;
         this.lives = 3;
         this.gameState = GameState.PLAYING;
-        this.currentLevel = 1;
+        this.currentLevel = 3;
         this.gameMode = mode; // Gán chế độ chơi
 
         this.bricks.clear();
@@ -120,11 +120,11 @@ public class GameManager {
 
             String brickType;
             double r = randomForAdventure.nextDouble();
-            if (r < 0.4) {
+            if (r < 0.15) {
                 brickType = "2normal";
-            } else if (r < 0.5) {
+            } else if (r < 0.30) {
                 brickType = "expand";
-            } else if (r < 0.6) {
+            } else if (r < 0.3) {
                 brickType = "fast_ball";
             } else {
                 brickType = "normal";
@@ -169,20 +169,15 @@ public class GameManager {
         CheckCollision.checkWallCollision(ball, StaticFinal.SCREEN_WIDTH, StaticFinal.SCREEN_HEIGHT);
 
         if (CheckCollision.intersects(ball, paddle)) {
-            CheckCollision.bounceOffPaddle(ball, paddle);
+            CheckCollision.bounceOff(ball, paddle);
             soundManager.playPaddleHit();
         }
-
-        boolean hasBouncedX = false;
-        boolean hasBouncedY = false;
 
         Iterator<Brick> brickIterator = bricks.iterator();
         while (brickIterator.hasNext()) {
             Brick brick = brickIterator.next();
             if (CheckCollision.intersects(ball, brick)) {
-                boolean[] bounceResult = CheckCollision.bounceOffBrick(ball, brick, hasBouncedX, hasBouncedY);
-                hasBouncedX = bounceResult[0];
-                hasBouncedY = bounceResult[1];
+                CheckCollision.bounceOff(ball, brick);
 
                 if (brick.getType().equals("2normal")) {
                     brick.takeHit();
@@ -208,23 +203,21 @@ public class GameManager {
 
                     brickIterator.remove();
                     score += 10;
+                    break;
                 }
             }
-        }
-        // *** THÊM KHỐI LỆNH NÀY VÀO (SAU VÒNG LẶP) ***
-        // Cập nhật vận tốc SAU KHI vòng lặp kết thúc,
-        // nếu có bất kỳ hướng nào bị thay đổi.
-        if (hasBouncedX || hasBouncedY) {
-            ball.updateVelocity();
         }
         if (bricks.isEmpty() && gameMode == GameMode.CLASSIC) {
             if (currentLevel == 1) {
                 currentLevel = 2;
                 setupGameObjects();
+            } else if (currentLevel == 2) {
+                currentLevel = 3;
+                setupGameObjects();
             } else {
-                gameState = GameState.VICTORY;
+                    gameState = GameState.VICTORY;
+                }
             }
-        }
         Iterator<PowerUp> powerUpIterator = fallingPowerUps.iterator();
         while (powerUpIterator.hasNext()) {
             PowerUp powerUp = powerUpIterator.next();
