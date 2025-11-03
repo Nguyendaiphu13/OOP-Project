@@ -80,15 +80,22 @@ public class GameManager {
         // THAY ĐỔI: Chỉ tạo level nếu là Classic
         if (gameMode == GameMode.CLASSIC) {
             if (currentLevel == 1) {
-                Level.generateLevel1(this,
-                        StaticFinal.BRICK_ROWS, StaticFinal.BRICK_COLS,
+                Level.generateLevel1(
+                        this, StaticFinal.BRICK_ROWS, StaticFinal.BRICK_COLS,
                         StaticFinal.BRICK_WIDTH, StaticFinal.BRICK_HEIGHT,
                         StaticFinal.BRICK_START_X, StaticFinal.BRICK_START_Y,
                         StaticFinal.BRICK_GAP_X, StaticFinal.BRICK_GAP_Y
                 );
             } else if (currentLevel == 2) {
-                Level.generateLevel2(this,
-                        StaticFinal.BRICK_ROWS, StaticFinal.BRICK_COLS,
+                Level.generateLevel2(
+                        this, StaticFinal.BRICK_ROWS, StaticFinal.BRICK_COLS,
+                        StaticFinal.BRICK_WIDTH, StaticFinal.BRICK_HEIGHT,
+                        StaticFinal.BRICK_START_X, StaticFinal.BRICK_START_Y,
+                        StaticFinal.BRICK_GAP_X, StaticFinal.BRICK_GAP_Y
+                );
+            } else if (currentLevel == 3) {
+                Level.generateLevel3(
+                        this, StaticFinal.BRICK_ROWS, StaticFinal.BRICK_COLS,
                         StaticFinal.BRICK_WIDTH, StaticFinal.BRICK_HEIGHT,
                         StaticFinal.BRICK_START_X, StaticFinal.BRICK_START_Y,
                         StaticFinal.BRICK_GAP_X, StaticFinal.BRICK_GAP_Y
@@ -117,7 +124,7 @@ public class GameManager {
                 brickType = "2normal";
             } else if (r < 0.30) {
                 brickType = "expand";
-            } else if (r < 0.45) {
+            } else if (r < 0.3) {
                 brickType = "fast_ball";
             } else {
                 brickType = "normal";
