@@ -362,6 +362,7 @@ public class GameManager {
             this.paddle.setX(save.paddleX);
             this.paddle.setWidth(save.paddleWidth);
         }
+        if(this.paddle != null) this.paddle.initializeGraphics();
 
         if (this.ball == null) {
             int ballRadius = StaticFinal.BALL_RADIUS;
@@ -374,6 +375,7 @@ public class GameManager {
             this.ball.directionX = save.ballDirectionX;
             this.ball.directionY = save.ballDirectionY;
         }
+        if(this.ball != null) this.ball.initializeGraphics();
 
         this.ball.alive = save.ballAlive;
         this.ball.updateVelocity();
