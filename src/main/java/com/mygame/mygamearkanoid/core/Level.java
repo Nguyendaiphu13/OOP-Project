@@ -43,7 +43,9 @@ public class Level {
                 if (i == 1 || i == 3) {
                     double speed = StaticFinal.BALL_SPEED;
                     double direction = (i == 1) ? 1.0 : -1.0;
-                    gameManager.bricks.add(new MoveBrick(x, y, brickWidth, brickHeight, "normal", speed * direction, 0));
+                    MoveBrick newMoveBrick = new MoveBrick(x, y, brickWidth, brickHeight, "normal", speed * direction, 0);
+                    newMoveBrick.initializeGraphics();
+                    gameManager.bricks.add(newMoveBrick);
 
                 } else {
                     String brickType;
