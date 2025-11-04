@@ -18,10 +18,9 @@ public class Paddle extends MovableObject {
     public Paddle(double x, double y, int width, int height,double speed) {
         super(x, y, width, height);
         this.speed = speed;
-        loadImage();
     }
 
-    private void loadImage() {
+    public void initializeGraphics() {
         String imagePath = "/com/mygame/mygamearkanoid/images/Paddle.png";
         try {
             URL imgUrl = getClass().getResource(imagePath);

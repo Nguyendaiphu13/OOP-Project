@@ -28,14 +28,13 @@ public class Brick extends MovableObject {
                 break;
         }
 
-        loadImage();
     }
 
     public int getHitPoints() {
         return this.hitPoints;
     }
 
-    private void loadImage() {
+    public void initializeGraphics() {
         String imageName = switch (this.type) {
             case "2normal" ->
                     (this.hitPoints == 2) ? "2normalBrick.png" : "Brick.png";
@@ -67,7 +66,7 @@ public class Brick extends MovableObject {
         if (this.hitPoints > 0) {
             this.hitPoints--;
             if (this.type.equals("2normal") && this.hitPoints == 1) {
-                loadImage();
+                initializeGraphics();
             }
         }
     }

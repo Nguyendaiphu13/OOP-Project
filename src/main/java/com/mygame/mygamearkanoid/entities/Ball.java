@@ -21,10 +21,10 @@ public class Ball extends MovableObject {
         this.directionX = directionX;
         this.directionY = directionY;
         this.radius = radius;
-        loadImage(); // Gọi hàm tải ảnh
+
     }
 
-    private void loadImage() {
+    public void initializeGraphics() {
         String imagePath = "/com/mygame/mygamearkanoid/images/Ball.png";
         try {
             URL imgUrl = getClass().getResource(imagePath);
