@@ -21,7 +21,7 @@ public class HighScoreManager {
         if (score <= 0) return;
 
         String filename = getFileForMode(mode);
-        List<Integer> scores = loadScores(filename); // <-- Gọi hàm bị thiếu
+        List<Integer> scores = loadScores(filename); 
         scores.add(score);
         Collections.sort(scores, Collections.reverseOrder());
 
@@ -63,4 +63,5 @@ public class HighScoreManager {
             System.err.println("Lỗi khi lưu high score: " + e.getMessage());
         }
     }
+
 }
