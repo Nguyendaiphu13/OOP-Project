@@ -1,4 +1,5 @@
 package com.mygame.mygamearkanoid.core;
+import com.mygame.mygamearkanoid.ui.Main1;
 
 import com.mygame.mygamearkanoid.data.BrickSave;
 import com.mygame.mygamearkanoid.data.GameSave;
@@ -7,7 +8,7 @@ import com.mygame.mygamearkanoid.entities.*;
 
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Random;
+import java.util.Random; // THÊM IMPORT
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -23,38 +24,47 @@ public class GameManager {
     public int score;
     public int lives;
     public GameState gameState;
-    public int currentLevel = 1;
+    public int currentLevel = 3;
 
-    // --- Biến Adventure Mode ---
-    public GameMode gameMode;
-    private long lastBrickSpawnTime = 0;
-    private static final long BRICK_SPAWN_INTERVAL = 10000;
-    private Random randomForAdventure = new Random();
-    // --------------------------
+    // --- THÊM CÁC BIẾN CHO ADVENTURE MODE ---
+    public GameMode gameMode; // Chế độ chơi hiện tại
+    private SoundManager soundManager;
+    private long lastBrickSpawnTime = 0; // Thời điểm cuối cùng sinh gạch
+    private static final long BRICK_SPAWN_INTERVAL = 10000; // 10 giây
+    private Random randomForAdventure = new Random(); // Để tạo gạch ngẫu nhiên
+    // ------------------------------------------
 
     public List<PowerUp> fallingPowerUps = new ArrayList<>();
     public List<PowerUp> activeEffects = new ArrayList<>();
     public long effectStartTime = 0;
+
+    public GameManager(SoundManager sm) {
+        this.soundManager = sm;
+        this.bricks = new ArrayList<>();
+        this.gameState = GameState.MENU;
+    }
 
     public GameManager() {
         this.bricks = new ArrayList<>();
         this.score = 0;
         this.lives = 3;
         this.gameState = GameState.MENU;
-        this.gameMode = GameMode.CLASSIC;
+        this.gameMode = GameMode.CLASSIC; // Mặc định
     }
 
+    // SỬA HÀM NÀY: Thêm GameMode
     public void resetGame(GameMode mode) {
         this.score = 0;
         this.lives = 3;
         this.gameState = GameState.PLAYING;
         this.currentLevel = 1;
-        this.gameMode = mode;
+        this.gameMode = mode; // Gán chế độ chơi
 
         this.bricks.clear();
         this.fallingPowerUps.clear();
         this.activeEffects.clear();
 
+        // THÊM: Reset timer nếu là Adventure
         if (this.gameMode == GameMode.ADVENTURE) {
             this.lastBrickSpawnTime = System.currentTimeMillis();
         }
@@ -75,6 +85,7 @@ public class GameManager {
 
         bricks.clear();
 
+        // THAY ĐỔI: Chỉ tạo level nếu là Classic
         if (gameMode == GameMode.CLASSIC) {
             if (currentLevel == 1) {
                 Level.generateLevel1(this,
@@ -92,6 +103,7 @@ public class GameManager {
                 );
             }
         }
+        // Nếu là Adventure, level bắt đầu trống
     }
 
     private void spawnNewBrickRow() {
@@ -115,11 +127,6 @@ public class GameManager {
                 brickType = "expand";
             } else if (r < 0.45) {
                 brickType = "fast_ball";
-            } else if (r < 0.55) {
-                double speed = StaticFinal.BALL_SPEED * 0.5;
-                double direction = randomForAdventure.nextBoolean() ? 1.0 : -1.0;
-                bricks.add(new MoveBrick(x, startY, StaticFinal.BRICK_WIDTH, StaticFinal.BRICK_HEIGHT, "normal", speed * direction, 0));
-                continue;
             } else {
                 brickType = "normal";
             }
@@ -127,13 +134,14 @@ public class GameManager {
         }
     }
 
+
     public void updateGame(SoundManager soundManager) {
         if (this.paddle == null || this.ball == null) return;
 
         paddle.update();
         ball.update();
         for (Brick brick : bricks) {
-            brick.update();
+            brick.update(); // Cập nhật gạch (cho MoveBrick)
         }
 
         if (paddle.getX() < 0) {
@@ -146,18 +154,18 @@ public class GameManager {
         if (gameMode == GameMode.ADVENTURE) {
             for (Brick brick : bricks) {
                 if (CheckCollision.intersects(brick, paddle)) {
-                    System.out.println("Thua: Gạch chạm thanh trượt!");
+                    System.out.println("Thua");
                     gameOver();
                     return;
                 }
             }
-
-            long now = System.currentTimeMillis();
+            long now = System.currentTimeMillis() ;
             if (now - lastBrickSpawnTime > BRICK_SPAWN_INTERVAL) {
                 spawnNewBrickRow();
-                lastBrickSpawnTime = now;
+                lastBrickSpawnTime = now ;
             }
         }
+
 
         CheckCollision.checkWallCollision(ball, StaticFinal.SCREEN_WIDTH, StaticFinal.SCREEN_HEIGHT);
 
@@ -200,7 +208,6 @@ public class GameManager {
                 }
             }
         }
-
         if (bricks.isEmpty() && gameMode == GameMode.CLASSIC) {
             if (currentLevel == 1) {
                 currentLevel = 2;
@@ -209,7 +216,6 @@ public class GameManager {
                 gameState = GameState.VICTORY;
             }
         }
-
         Iterator<PowerUp> powerUpIterator = fallingPowerUps.iterator();
         while (powerUpIterator.hasNext()) {
             PowerUp powerUp = powerUpIterator.next();
@@ -269,53 +275,73 @@ public class GameManager {
         System.out.println("Final score: " + score);
     }
 
-    // ========== HÀM SAVE GAME (Không đổi) ==========
-    public void saveGame(String filename) throws IOException {
+    public void saveGame() throws IOException {
+        if (gameMode == null) return; // Không save nếu không rõ chế độ
+
+        // Quyết định save file nào
+        String filename = (gameMode == GameMode.CLASSIC)
+                ? StaticFinal.CLASSIC_SAVE_FILE
+                : StaticFinal.ADVENTURE_SAVE_FILE;
+
         GameSave data = new GameSave();
+
+        // (Toàn bộ code tạo 'data' của bạn...
+        //  ví dụ: data.score = this.score; v.v...)
         data.score = this.score;
         data.lives = this.lives;
         data.currentLevel = this.currentLevel;
-        data.paddleX = this.paddle.getX();
-        data.paddleWidth = this.paddle.getWidth();
-        data.ballX = this.ball.getX();
-        data.ballY = this.ball.getY();
-        data.ballDirectionX = this.ball.directionX;
-        data.ballDirectionY = this.ball.directionY;
-        data.ballAlive = this.ball.alive;
 
-        // Logic mới đã nằm trong BrickSave constructor
-        for (Brick b : this.bricks) {
-            data.bricks.add(new BrickSave(b));
+        if(this.paddle != null) {
+            data.paddleX = this.paddle.getX();
+            data.paddleWidth = this.paddle.getWidth();
         }
 
-        if (!this.activeEffects.isEmpty()) {
-            PowerUp effect = this.activeEffects.getFirst();
-            long elapsedTime = System.currentTimeMillis() - this.effectStartTime;
-            long timeRemaining = effect.getDuration() - elapsedTime;
-            if (timeRemaining > 0) {
-                data.activeEffect = new PowerUpSave(effect.getType(), timeRemaining);
+        if(this.ball != null) {
+            data.ballX = this.ball.getX();
+            data.ballY = this.ball.getY();
+            data.ballDirectionX = this.ball.directionX;
+            data.ballDirectionY = this.ball.directionY;
+            data.ballAlive = this.ball.alive;
+        }
+
+        // Lưu gạch (bro đã có class BrickSave rồi)
+        data.bricks = new ArrayList<BrickSave>();
+        for(Brick brick : this.bricks) {
+            data.bricks.add(new BrickSave(brick));
+        }
+
+        // Lưu power-up (nếu có)
+        if (!activeEffects.isEmpty()) {
+            PowerUp currentEffect = activeEffects.getFirst();
+            long elapsedTime = System.currentTimeMillis() - effectStartTime;
+            long remainingTime = currentEffect.getDuration() - elapsedTime;
+            if (remainingTime > 0) {
+                data.activeEffect = new PowerUpSave(currentEffect.getType(), remainingTime);
             }
         }
+
+        // Ghi ra tệp tin
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {
             oos.writeObject(data);
             System.out.println("Game đã lưu vào: " + filename);
         }
     }
 
-    // ========== HÀM LOAD GAME (CẬP NHẬT) ==========
-    public void loadGame(String filename) throws IOException, ClassNotFoundException {
+    public void loadGame(GameMode mode) throws IOException, ClassNotFoundException {
+        String filename = (mode == GameMode.CLASSIC)
+                ? StaticFinal.CLASSIC_SAVE_FILE
+                : StaticFinal.ADVENTURE_SAVE_FILE;
         GameSave save;
 
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filename))) {
             save = (GameSave) ois.readObject();
         }
-
-        this.gameMode = GameMode.CLASSIC;
+        this.gameMode = mode;
         this.score = save.score;
         this.lives = save.lives;
         this.gameState = GameState.PLAYING;
-        this.currentLevel = save.currentLevel;
-        if (this.currentLevel == 0) this.currentLevel = 1;
+        this.currentLevel = save.currentLevel; // Tải level
+        if (this.currentLevel == 0) this.currentLevel = 1; // An toàn
 
         if (this.paddle == null) {
             double paddleY = StaticFinal.SCREEN_HEIGHT - StaticFinal.PADDLE_HEIGHT_DEFAULT - StaticFinal.PADDLE_Y_OFFSET;
@@ -343,17 +369,13 @@ public class GameManager {
         this.bricks.clear();
         for (BrickSave bd : save.bricks) {
             Brick b;
-            if (bd.isMoveBrick) {
-                b = new MoveBrick(bd.x, bd.y, bd.width, bd.height, bd.type, bd.dx, bd.dy);
-            } else {
-                b = new Brick(bd.x, bd.y, bd.width, bd.height, bd.type);
-            }
+            b = new Brick(bd.x, bd.y, bd.width, bd.height, bd.type);
+
             if (bd.type.equals("2normal") && bd.hitPoints == 1) {
                 b.takeHit();
             }
             this.bricks.add(b);
         }
-
 
         this.fallingPowerUps.clear();
         this.activeEffects.clear();
