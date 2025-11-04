@@ -7,7 +7,7 @@ import com.mygame.mygamearkanoid.entities.*;
 
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Random; // THÊM IMPORT
+import java.util.Random; 
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -414,5 +414,6 @@ public class GameManager {
             }
         }
     }
+
 
 }
