@@ -233,7 +233,7 @@ public class ScreenManager {
         saveButton.setOnAction(_ -> {
             try {
                 gameManager.saveGame();
-                saveStatusLabel.setText("Đã lưu game!");
+                saveStatusLabel.setText("SAVED !!!");
                 if (gameManager.gameMode == GameMode.CLASSIC) {
                     mainApp.deleteSaveFile(GameMode.ADVENTURE);
                 } else {
@@ -267,7 +267,7 @@ public class ScreenManager {
         int finalScore = gameManager.score;
         Font scoreFont = Font.getDefault();
 
-        gameOverLabel = new Label(String.format("             %d", finalScore)); //
+        gameOverLabel = new Label(String.format("%d", finalScore)); //
 
         try {
             String fontPath = "/com/mygame/mygamearkanoid/fonts/PixelOperatorHB.ttf";
@@ -284,7 +284,7 @@ public class ScreenManager {
         gameOverLabel.setFont(scoreFont); //
         gameOverLabel.setTextFill(Color.WHITE); //
         gameOverLabel.setTranslateY(147); //
-        gameOverLabel.setTranslateX(20); //
+        gameOverLabel.setTranslateX(35); //
 
         String imgPath = "/com/mygame/mygamearkanoid/images/";
 
@@ -304,9 +304,6 @@ public class ScreenManager {
 
         menuButton.setTranslateY(270);
         menuButton.setTranslateX(0);
-
-        // THÊM: Label "A LOST ERA"
-
 
         gameOverBox.getChildren().addAll(gameOverLabel, playAgainButton, menuButton);
         return gameOverBox;
