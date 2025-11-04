@@ -73,12 +73,14 @@ public class GameManager {
         double paddleX = (StaticFinal.SCREEN_WIDTH - StaticFinal.PADDLE_WIDTH_DEFAULT) / 2.0;
         double paddleY = StaticFinal.SCREEN_HEIGHT - StaticFinal.PADDLE_HEIGHT_DEFAULT - StaticFinal.PADDLE_Y_OFFSET;
         this.paddle = new Paddle(paddleX, paddleY, StaticFinal.PADDLE_WIDTH_DEFAULT, StaticFinal.PADDLE_HEIGHT_DEFAULT, StaticFinal.PADDLE_SPEED);
+        if(this.paddle != null) this.paddle.initializeGraphics();
 
         int ballRadius = StaticFinal.BALL_RADIUS;
         double ballX = StaticFinal.SCREEN_WIDTH / 2.0 - ballRadius;
         double ballY = StaticFinal.SCREEN_HEIGHT / 2.0 - ballRadius;
         double vecDir = 1 / Math.sqrt(2);
         this.ball = new Ball(ballX, ballY, ballRadius * 2, ballRadius * 2, StaticFinal.BALL_SPEED, vecDir, -vecDir, ballRadius);
+        if(this.ball != null) this.ball.initializeGraphics();
 
         bricks.clear();
 
@@ -92,7 +94,7 @@ public class GameManager {
                 );
             } else if (currentLevel == 2) {
                 Level.generateLevel2(
-                    this, StaticFinal.BRICK_ROWS, StaticFinal.BRICK_COLS,
+                        this, StaticFinal.BRICK_ROWS, StaticFinal.BRICK_COLS,
                         StaticFinal.BRICK_WIDTH, StaticFinal.BRICK_HEIGHT,
                         StaticFinal.BRICK_START_X, StaticFinal.BRICK_START_Y,
                         StaticFinal.BRICK_GAP_X, StaticFinal.BRICK_GAP_Y
