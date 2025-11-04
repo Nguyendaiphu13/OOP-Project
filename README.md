@@ -9,5 +9,6 @@
 3. Phân chia công việc
    + Gameloop, GamePanel: Phú
    + Object, Event handling: Giang, Hiếu
+***
 Detail: https://docs.google.com/spreadsheets/d/1lHYmg5goyIf3oqCHcmiCMdSELW5UbH6mhyBIz-iRIgw/edit?usp=drive_link
 
