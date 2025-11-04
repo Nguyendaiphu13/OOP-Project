@@ -346,7 +346,7 @@ public class ScreenManager {
         highScoreDisplayList.setMaxWidth(300);
 
         if (scores.isEmpty()) {
-            Label emptyLabel = new Label("Chưa có điểm");
+            Label emptyLabel = new Label("");
             emptyLabel.setFont(Font.font(pixelFont.getFamily(), 18));
             emptyLabel.setTextFill(Color.rgb(200, 200, 200));
             highScoreDisplayList.getChildren().add(emptyLabel);
