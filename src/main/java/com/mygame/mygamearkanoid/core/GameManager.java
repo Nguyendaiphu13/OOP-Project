@@ -23,7 +23,7 @@ public class GameManager {
     public int score;
     public int lives ;
     public GameState gameState;
-    public int currentLevel = 3;
+    public int currentLevel = 1;
 
 
     public GameMode gameMode; // Chế độ chơi hiện tại
@@ -91,8 +91,8 @@ public class GameManager {
                         StaticFinal.BRICK_GAP_X, StaticFinal.BRICK_GAP_Y
                 );
             } else if (currentLevel == 2) {
-                Level.generateLevel2(this,
-                        StaticFinal.BRICK_ROWS, StaticFinal.BRICK_COLS,
+                Level.generateLevel2(
+                    this, StaticFinal.BRICK_ROWS, StaticFinal.BRICK_COLS,
                         StaticFinal.BRICK_WIDTH, StaticFinal.BRICK_HEIGHT,
                         StaticFinal.BRICK_START_X, StaticFinal.BRICK_START_Y,
                         StaticFinal.BRICK_GAP_X, StaticFinal.BRICK_GAP_Y
@@ -107,7 +107,6 @@ public class GameManager {
                 );
             }
         }
-        // Nếu là Adventure, level bắt đầu trống
     }
 
     private void spawnNewBrickRow() {
@@ -293,16 +292,11 @@ public class GameManager {
     }
 
     public void saveGame() throws IOException {
-        if (gameMode == null) return; // Không save nếu không rõ chế độ
-
-        // Quyết định save file nào
+        if (gameMode == null) return;
         String filename = (gameMode == GameMode.CLASSIC)
                 ? StaticFinal.CLASSIC_SAVE_FILE
                 : StaticFinal.ADVENTURE_SAVE_FILE;
-
         GameSave data = new GameSave();
-
-        // Toàn bộ code tạo 'data'
         data.score = this.score;
         data.lives = this.lives;
         data.currentLevel = this.currentLevel;
@@ -383,8 +377,11 @@ public class GameManager {
         this.bricks.clear();
         for (BrickSave bd : save.bricks) {
             Brick b;
-            b = new Brick(bd.x, bd.y, bd.width, bd.height, bd.type);
-
+            if (bd.isMoveBrick) {
+                b = new MoveBrick(bd.x, bd.y, bd.width, bd.height, bd.type, bd.dx, bd.dy);
+            } else {
+                b = new Brick(bd.x, bd.y, bd.width, bd.height, bd.type);
+            }
             if (bd.type.equals("2normal") && bd.hitPoints == 1) {
                 b.takeHit();
             }
@@ -410,4 +407,5 @@ public class GameManager {
             }
         }
     }
+
 }
