@@ -386,6 +386,7 @@ public class GameManager {
             } else {
                 b = new Brick(bd.x, bd.y, bd.width, bd.height, bd.type);
             }
+            b.initializeGraphics();
             if (bd.type.equals("2normal") && bd.hitPoints == 1) {
                 b.takeHit();
             }
