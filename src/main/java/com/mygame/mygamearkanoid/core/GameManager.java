@@ -135,7 +135,9 @@ public class GameManager {
             } else {
                 brickType = "normal";
             }
-            bricks.add(new Brick(x, startY, StaticFinal.BRICK_WIDTH, StaticFinal.BRICK_HEIGHT, brickType));
+            Brick newBrick = new Brick(x, startY, StaticFinal.BRICK_WIDTH, StaticFinal.BRICK_HEIGHT, brickType);
+            newBrick.initializeGraphics();
+            bricks.add(newBrick);
         }
     }
 
